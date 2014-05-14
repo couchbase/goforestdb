@@ -10,7 +10,7 @@ Go bindings for ForestDB
 
 ## Documentation
 
-FIXME replace with link to godocs
+See [godocs](http://godoc.org/github.com/couchbaselabs/goforestdb)
 
 ## Sample usage (without proper error handling):
 

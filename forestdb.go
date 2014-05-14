@@ -41,6 +41,49 @@ func Open(filename string, config *Config) (*Database, error) {
 	return &rv, nil
 }
 
+// Open opens the database with a given file name
+// The documents in the database will be indexed using the customized compare
+// function. The key size MUST be fixed and same as the chunk_size in the
+// configuration. The typical example is to use a primitive type (e.g., int,
+// double) as a primary key and the numeric compare function as a custom
+// function.
+func OpenCmpFixed(filename string, config *Config) (*Database, error) {
+
+	if config == nil {
+		config = DefaultConfig()
+	}
+
+	dbname := C.CString(filename)
+	defer C.free(unsafe.Pointer(dbname))
+
+	rv := Database{}
+	errNo := C.fdb_open_cmp_fixed(&rv.db, dbname, config.config)
+	if errNo != RESULT_SUCCESS {
+		return nil, Error(errNo)
+	}
+	return &rv, nil
+}
+
+// Open opens the database with a given file name
+// The documents in the database will be indexed using the customized compare
+// function. The key size can be variable.
+func OpenCmpVariable(filename string, config *Config) (*Database, error) {
+
+	if config == nil {
+		config = DefaultConfig()
+	}
+
+	dbname := C.CString(filename)
+	defer C.free(unsafe.Pointer(dbname))
+
+	rv := Database{}
+	errNo := C.fdb_open_cmp_variable(&rv.db, dbname, config.config)
+	if errNo != RESULT_SUCCESS {
+		return nil, Error(errNo)
+	}
+	return &rv, nil
+}
+
 // Get retrieves the metadata and doc body for a given key
 func (d *Database) Get(doc *Doc) error {
 	errNo := C.fdb_get(d.db, doc.doc)

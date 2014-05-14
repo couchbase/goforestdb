@@ -12,6 +12,10 @@ package forestdb
 //#include <forestdb/forestdb.h>
 import "C"
 
+import (
+	"unsafe"
+)
+
 type OpenFlags uint32
 
 const (
@@ -158,6 +162,14 @@ func (c *Config) CompactorSleepDuration() uint64 {
 
 func (c *Config) SetCompactorSleepDuration(s uint64) {
 	c.config.compactor_sleep_duration = C.uint64_t(s)
+}
+
+func (c *Config) SetCustomCompareFixed(comparator unsafe.Pointer) {
+	c.config.cmp_fixed = C.fdb_custom_cmp_fixed(comparator)
+}
+
+func (c *Config) SetCustomCompareVariable(comparator unsafe.Pointer) {
+	c.config.cmp_variable = C.fdb_custom_cmp_variable(comparator)
 }
 
 // DefaultConfig gets the default ForestDB config

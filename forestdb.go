@@ -1,182 +1,137 @@
-package goforestdb
+package forestdb
 
-/*
-#cgo LDFLAGS: -lforestdb
+//  Copyright (c) 2014 Couchbase, Inc.
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+//  except in compliance with the License. You may obtain a copy of the License at
+//    http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software distributed under the
+//  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+//  either express or implied. See the License for the specific language governing permissions
+//  and limitations under the License.
 
-#include <stdlib.h>
-#include <string.h>
-#include "forestdb/forestdb.h"
-
-void init_fdb_config(fdb_config *config)
-{
-
-    memset(config, 0, sizeof(fdb_config));
-    config->chunksize = config->offsetsize = sizeof(uint64_t);
-    config->buffercache_size = 1 * 1024 * 1024;
-    config->wal_threshold = 1024;
-    config->seqtree = FDB_SEQTREE_USE;
-    config->flag = 0;
-
-}
-*/
+//#cgo LDFLAGS: -lforestdb
+//#include <stdlib.h>
+//#include <string.h>
+//#include <forestdb/forestdb.h>
 import "C"
 
 import (
-	"errors"
-	"fmt"
 	"unsafe"
-//	"log"
 )
 
-type Errno int
-
-func (e Errno) Error() string {
-	s := errText[e]
-	if s == "" {
-		return fmt.Sprintf("errno %d", int(e))
-	}
-	return s
-}
-
-var errText = map[Errno]string{
-	1: "DB Operation Failed",
-	2: "Invalid args for operation",
-}
-
-type Conn struct {
+// Database handle
+type Database struct {
 	db *C.fdb_handle
 }
 
-func Open(filename string) (*Conn, error) {
+// Open opens the database with a given file name
+func Open(filename string, config *Config) (*Database, error) {
 
-	var db C.fdb_handle
-	var config C.fdb_config
-	C.init_fdb_config(&config)
+	if config == nil {
+		config = DefaultConfing()
+	}
 
 	dbname := C.CString(filename)
 	defer C.free(unsafe.Pointer(dbname))
 
-	rv := C.fdb_open(&db, dbname, config)
-
-	if rv != 0 {
-		return nil, errors.New(Errno(rv).Error())
+	rv := Database{}
+	errNo := C.fdb_open(&rv.db, dbname, config.config)
+	if errNo != RESULT_SUCCESS {
+		return nil, Error(errNo)
 	}
-/*
-	if db == nil {
-		return nil, errors.New("forestdb succeeded without returning a database")
-	}
-*/
-	return &Conn{&db}, nil
+	return &rv, nil
 }
 
-func (c *Conn) Put(key, meta, value []byte) error {
-
-	var k, m, v unsafe.Pointer
-
-	if len(key) != 0 {
-		k = unsafe.Pointer(&key[0])
-	}
-	
-	if len(meta) != 0 {
-		m = unsafe.Pointer(&meta[0])
-	}
-	
-	if len(value) != 0 {
-		v = unsafe.Pointer(&value[0])
-	}
-	
-	lenk := len(key)
-	lenm := len(meta)
-	lenv := len(value)
-
-	var doc *C.fdb_doc
-
-	C.fdb_doc_create(&doc,
-		k, C.size_t(lenk), m, C.size_t(lenm), v, C.size_t(lenv))
-	defer C.fdb_doc_free(doc)
-
-	rv := C.fdb_set(c.db, doc)
-	if rv != 0 {
-		return errors.New(Errno(rv).Error())
+// Get retrieves the metadata and doc body for a given key
+func (d *Database) Get(doc *Doc) error {
+	errNo := C.fdb_get(d.db, doc.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
 	}
 	return nil
 }
 
-func (c *Conn) Get(key []byte) ([]byte, error) {
-
-	var k unsafe.Pointer
-	if len(key) != 0 {
-		k = unsafe.Pointer(&key[0])
-	}
-	lenk := len(key)
-
-	var doc *C.fdb_doc
-
-	C.fdb_doc_create(&doc, k, C.size_t(lenk), nil, C.size_t(0), nil, C.size_t(0))
-	defer C.fdb_doc_free(doc)
-	rv := C.fdb_get(c.db, doc)
-
-	if rv != 0 {
-		return nil, errors.New(Errno(rv).Error())
-	}
-
-	value := doc.body
-	vallen := doc.bodylen
-	return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
-}
-
-func (c *Conn) Delete(key []byte) error {
-
-	var k unsafe.Pointer
-	if len(key) != 0 {
-		k = unsafe.Pointer(&key[0])
-	}
-	
-	lenk := len(key)
-
-	var doc *C.fdb_doc
-
-	C.fdb_doc_create(&doc, k, C.size_t(lenk), nil, C.size_t(0), nil, C.size_t(0))
-	defer C.fdb_doc_free(doc)
-	rv := C.fdb_set(c.db, doc)
-	if rv != 0 {
-		return errors.New(Errno(rv).Error())
+// GetMetaOnly retrieves the metadata for a given key
+func (d *Database) GetMetaOnly(doc *Doc) error {
+	errNo := C.fdb_get_metaonly(d.db, doc.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
 	}
 	return nil
 }
 
-func (c *Conn) Compact(newfilename string) error {
+// GetBySeq retrieves the metadata and doc body for a given sequence number
+func (d *Database) GetBySeq(doc *Doc) error {
+	errNo := C.fdb_get_byseq(d.db, doc.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// GetMetaOnlyBySeq retrieves the metadata for a given sequence number
+func (d *Database) GetMetaOnlyBySeq(doc *Doc) error {
+	errNo := C.fdb_get_metaonly_byseq(d.db, doc.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// GetByOffset retrieves a doc's metadata and body with a given doc offset in the database file
+func (d *Database) GetByOffset(doc *Doc) error {
+	errNo := C.fdb_get_byoffset(d.db, doc.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// Set update the metadata and doc body for a given key
+func (d *Database) Set(doc *Doc) error {
+	errNo := C.fdb_set(d.db, doc.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// Delete deletes a key, its metadata and value
+func (d *Database) Delete(doc *Doc) error {
+	errNo := C.fdb_del(d.db, doc.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// Compact the current database file and create a new compacted file
+func (d *Database) Compact(newfilename string) error {
 
 	f := C.CString(newfilename)
 	defer C.free(unsafe.Pointer(f))
 
-	rv := C.fdb_compact(c.db, f)
-	if rv != 0 {
-		return errors.New(Errno(rv).Error())
+	errNo := C.fdb_compact(d.db, f)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
 	}
 	return nil
 }
 
-func (c *Conn) Commit() error {
-	rv := C.fdb_commit(c.db)
-	if rv != 0 {
-		return errors.New(Errno(rv).Error())
+// Close the database file
+func (d *Database) Close() error {
+	errNo := C.fdb_close(d.db)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
 	}
 	return nil
 }
 
-func (c *Conn) Close() error {
-	rv := C.fdb_close(c.db)
-	if rv != 0 {
-		return errors.New(Errno(rv).Error())
-	}
-	return nil
-}
-
+// Shutdown destroys all the resources (e.g., buffer cache, in-memory WAL indexes, daemon compaction thread, etc.) and then shutdown the ForestDB engine
 func Shutdown() error {
-	rv := C.fdb_shutdown()
-	if rv != 0 {
-		return errors.New(Errno(rv).Error())
+	errNo := C.fdb_shutdown()
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
 	}
 	return nil
 }

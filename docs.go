@@ -1,18 +1,7 @@
-# goforestdb
+/*
+ForestDB bindings for go
 
-Go bindings for ForestDB
-
-## Building
-
-1.  Obtain and build forestdb: https://github.com/couchbaselabs/forestdb
-1.  Install library and header files to system location
-1.  go get github.com/couchbaselabs/goforestdb
-
-## Documentation
-
-FIXME replace with link to godocs
-
-## Sample usage (without proper error handling):
+Sample usage (without proper error handling):
 
 	// Open a database
 	db, _ := Open("test", nil)
@@ -34,3 +23,5 @@ FIXME replace with link to godocs
 	doc3, _ := NewDoc([]byte("key"), nil, nil)
 	defer doc3.Close()
 	db.Delete(doc3)
+*/
+package forestdb

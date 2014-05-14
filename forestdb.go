@@ -11,7 +11,6 @@ package forestdb
 
 //#cgo LDFLAGS: -lforestdb
 //#include <stdlib.h>
-//#include <string.h>
 //#include <forestdb/forestdb.h>
 import "C"
 

@@ -22,6 +22,15 @@ func TestForestDBCrud(t *testing.T) {
 	}
 	defer db.Close()
 
+	// check the dbInfo
+	dbInfo, err := db.DbInfo()
+	if err != nil {
+		t.Error(err)
+	}
+	if dbInfo.LastSeqNum() != 0 {
+		t.Errorf("expected last_seqnum to be 0, got %d", dbInfo.LastSeqNum())
+	}
+
 	// get a non-existant key
 	doc, err := NewDoc([]byte("doesnotexist"), nil, nil)
 	if err != nil {
@@ -126,4 +135,13 @@ func TestForestDBCrud(t *testing.T) {
 		t.Error(err)
 	}
 	doc.Close()
+
+	// check the db info at the end
+	dbInfo, err = db.DbInfo()
+	if err != nil {
+		t.Error(err)
+	}
+	if dbInfo.LastSeqNum() != 5 {
+		t.Errorf("expected last_seqnum to be 0, got %d", dbInfo.LastSeqNum())
+	}
 }

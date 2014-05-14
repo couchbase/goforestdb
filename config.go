@@ -18,7 +18,7 @@ type Config struct {
 }
 
 // DefaultConfig gets the default ForestDB config
-func DefaultConfing() *Config {
+func DefaultConfig() *Config {
 	config := C.fdb_get_default_config()
 	return &Config{
 		config: &config,

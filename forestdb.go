@@ -28,7 +28,7 @@ type Database struct {
 func Open(filename string, config *Config) (*Database, error) {
 
 	if config == nil {
-		config = DefaultConfing()
+		config = DefaultConfig()
 	}
 
 	dbname := C.CString(filename)

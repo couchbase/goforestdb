@@ -39,6 +39,13 @@ const (
 	DRB_ODIRECT_ASYNC DurabilityOpt = 0x3
 )
 
+type CompactOpt uint8
+
+const (
+	COMPACT_MANUAL CompactOpt = 0
+	COMPACT_AUTO   CompactOpt = 1
+)
+
 // ForestDB config options
 type Config struct {
 	config *C.fdb_config
@@ -138,6 +145,14 @@ func (c *Config) CompressDocumentBody() bool {
 
 func (c *Config) SetCompressDocumentBody(b bool) {
 	c.config.compress_document_body = C.bool(b)
+}
+
+func (c *Config) CompactionMode() CompactOpt {
+	return CompactOpt(c.config.compaction_mode)
+}
+
+func (c *Config) SetCompactionMode(o CompactOpt) {
+	c.config.compaction_mode = C.fdb_compaction_mode_t(o)
 }
 
 func (c *Config) CompactionThreshold() uint8 {

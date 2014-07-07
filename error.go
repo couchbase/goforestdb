@@ -13,29 +13,34 @@ package forestdb
 import "C"
 
 const (
-	RESULT_SUCCESS                C.fdb_status = 0
-	RESULT_INVALID_ARGS           Error        = -1
-	RESULT_OPEN_FAIL              Error        = -2
-	RESULT_NO_SUCH_FILE           Error        = -3
-	RESULT_WRITE_FAIL             Error        = -4
-	RESULT_READ_FAIL              Error        = -5
-	RESULT_CLOSE_FAIL             Error        = -6
-	RESULT_COMMIT_FAIL            Error        = -7
-	RESULT_ALLOC_FAIL             Error        = -8
-	RESULT_KEY_NOT_FOUND          Error        = -9
-	RESULT_RONLY_VIOLATION        Error        = -10
-	RESULT_COMPACTION_FAIL        Error        = -11
-	RESULT_ITERATOR_FAIL          Error        = -12
-	RESULT_SEEK_FAIL              Error        = -13
-	RESULT_FSYNC_FAIL             Error        = -14
-	RESULT_CHECKSUM_ERROR         Error        = -15
-	RESULT_FILE_CORRUPTION        Error        = -16
-	RESULT_COMPRESSION_FAIL       Error        = -17
-	RESULT_NO_DB_INSTANCE         Error        = -18
-	RESULT_FAIL_BY_ROLLBACK       Error        = -19
-	RESULT_INVALID_CONFIG         Error        = -20
-	RESULT_MANUAL_COMPACTION_FAIL Error        = -21
-	RESULT_FAIL                   Error        = -100
+	RESULT_SUCCESS                 C.fdb_status = 0
+	RESULT_INVALID_ARGS            Error        = -1
+	RESULT_OPEN_FAIL               Error        = -2
+	RESULT_NO_SUCH_FILE            Error        = -3
+	RESULT_WRITE_FAIL              Error        = -4
+	RESULT_READ_FAIL               Error        = -5
+	RESULT_CLOSE_FAIL              Error        = -6
+	RESULT_COMMIT_FAIL             Error        = -7
+	RESULT_ALLOC_FAIL              Error        = -8
+	RESULT_KEY_NOT_FOUND           Error        = -9
+	RESULT_RONLY_VIOLATION         Error        = -10
+	RESULT_COMPACTION_FAIL         Error        = -11
+	RESULT_ITERATOR_FAIL           Error        = -12
+	RESULT_SEEK_FAIL               Error        = -13
+	RESULT_FSYNC_FAIL              Error        = -14
+	RESULT_CHECKSUM_ERROR          Error        = -15
+	RESULT_FILE_CORRUPTION         Error        = -16
+	RESULT_COMPRESSION_FAIL        Error        = -17
+	RESULT_NO_DB_INSTANCE          Error        = -18
+	RESULT_FAIL_BY_ROLLBACK        Error        = -19
+	RESULT_INVALID_CONFIG          Error        = -20
+	RESULT_MANUAL_COMPACTION_FAIL  Error        = -21
+	RESULT_INVALID_COMPACTION_MODE Error        = -22
+	RESULT_FILE_IS_BUSY            Error        = -23
+	RESULT_FILE_REMOVE_FAIL        Error        = -24
+	RESULT_FILE_RENAME_FAIL        Error        = -25
+	RESULT_TRANSACTION_FAIL        Error        = -26
+	RESULT_FAIL                    Error        = -100
 )
 
 type Error int
@@ -67,5 +72,10 @@ var resultMessages = map[int]string{
 	-19:  "fail by rollback",
 	-20:  "invalid config",
 	-21:  "manual compaction fail",
+	-22:  "invalid compaction mode",
+	-23:  "file is busy",
+	-24:  "file remove fail",
+	-25:  "file rename fail",
+	-26:  "transaction fail",
 	-100: "fail",
 }

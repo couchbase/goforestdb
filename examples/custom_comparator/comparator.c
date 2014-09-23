@@ -1,4 +1,4 @@
-#include <forestdb/forestdb.h>
+#include <libforestdb/forestdb.h>
 #include "comparator.h"
 
 extern int CompareBytesReversed(void *key1, size_t keylen1, void *key2, size_t keylen2);

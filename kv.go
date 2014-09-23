@@ -10,7 +10,7 @@ package forestdb
 //  and limitations under the License.
 
 //#include <stdlib.h>
-//#include <forestdb/forestdb.h>
+//#include <libforestdb/forestdb.h>
 import "C"
 
 import (

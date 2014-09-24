@@ -9,7 +9,7 @@ package forestdb
 //  either express or implied. See the License for the specific language governing permissions
 //  and limitations under the License.
 
-//#include <forestdb/forestdb.h>
+//#include <libforestdb/forestdb.h>
 import "C"
 
 import (

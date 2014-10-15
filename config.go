@@ -13,6 +13,7 @@ package forestdb
 import "C"
 
 import (
+	"time"
 	"unsafe"
 )
 
@@ -46,151 +47,139 @@ const (
 	COMPACT_AUTO   CompactOpt = 1
 )
 
-// ForestDB config options
+// Config wraps ForestDB's configuration options
 type Config struct {
-	config *C.fdb_config
+	// Chunk size (bytes) that is used to build B+-tree at each level.
+	// It is set to 8 bytes by default and has a min value of 4 bytes
+	// and a max value of 64 bytes.
+	// This is a local config to each ForestDB database instance.
+	ChunkSize uint16
+
+	// Size of block that is a unit of IO operations.
+	// It is set to 4KB by default and has a min value of 1KB and a max value of
+	// 128KB. This is a global config that is used across all ForestDB database
+	// instances.
+	BlockSize uint32
+
+	// Buffer cache size in bytes. If the size is set to zero, then the buffer
+	// cache is disabled. This is a global config that is used across all
+	// ForestDB database instances. 128MB by default.
+	BufferCacheSize uint64
+
+	// WAL index size threshold in memory (4096 entries by default).
+	// This is a local config to each ForestDB database instance.
+	WALThreshold uint64
+
+	// Flag to enable flushing the WAL whenever it reaches its threshold size.
+	// This reduces memory usage when a lot of data is written before a commit.
+	// Disabled by default.
+	WALFlushBeforeCommit bool
+
+	// Interval for purging logically deleted documents.
+	// It is set to 0 (purge during next compaction) by default.
+	// Set values are always floored to the next second interval.
+	// This is a local config to each ForestDB database instance.
+	PurgingInterval time.Duration
+
+	// Set the sequence B+-Tree mode. Defaults to SEQTREE_USE.
+	// This is a local config to each ForestDB database instance.
+	SeqTree SeqTreeOpt
+
+	// Flag to enable synchronous or asynchronous commit options.
+	// This is a local config to each ForestDB database instance.
+	// Uses a synchronous commit by default.
+	Durability DurabilityOpt
+
+	// Flags for opening the DB. It can be used for specifying read-only mode.
+	// This is a local config to each ForestDB database instance.
+	// By default, set to OPEN_FLAG_CREATE
+	OpenFlags OpenFlags
+
+	// Maximum size (bytes) of temporary buffer for compaction (4MB by default).
+	// This is a local config to each ForestDB database instance.
+	CompactionBufferMaxSize uint32
+
+	// Skip cleaning all the cached blocks in the global buffer cache when a
+	// database file is closed. This is a global config that is used across
+	// all ForestDB database instances.
+	SkipCacheCleanupOnClose bool
+
+	// Compress the body of document when it is written on disk using snappy.
+	// The compression is disabled by default. This is a global config that is
+	// used across all ForestDB database instances.
+	CompressDocumentBody bool
+
+	// Sets compaction mode for the file. Defaults to: COMPACT_MANUAL.
+	// This is a local config to each ForestDB database instance.
+	CompactionMode CompactOpt
+
+	// Compaction threshold in the unit of percentage (%). It can be calculated
+	// as '(stale data size)/(total file size)'. The compaction daemon triggers
+	// compaction if this threshold is satisfied. Defaults to 30%.
+	// Compaction will not be performed when this value is set to zero or 100.
+	// This is a local config to each ForestDB database instance.
+	CompactionThreshold uint8
+
+	// The minimum filesize to perform compaction. Defaults to 1M.
+	// This is a local config to each ForestDB database instance.
+	CompactionMinFileSize uint64
+
+	// Duration that the compaction daemon periodically wakes up. Defaults to 15s.
+	// Set values are always floored to the next second interval.
+	// This is a global config that is used across all ForestDB database instances.
+	CompactionSleep time.Duration
+
+	CustomCompareFixed    unsafe.Pointer
+	CustomCompareVariable unsafe.Pointer
 }
 
-func (c *Config) ChunkSize() uint16 {
-	return uint16(c.config.chunksize)
-}
-
-func (c *Config) SetChunkSize(s uint16) {
-	c.config.chunksize = C.uint16_t(s)
-}
-
-func (c *Config) BlockSize() uint32 {
-	return uint32(c.config.blocksize)
-}
-
-func (c *Config) SetBlockSize(s uint32) {
-	c.config.blocksize = C.uint32_t(s)
-}
-
-func (c *Config) BufferCacheSize() uint64 {
-	return uint64(c.config.buffercache_size)
-}
-
-func (c *Config) SetBufferCacheSize(s uint64) {
-	c.config.buffercache_size = C.uint64_t(s)
-}
-
-func (c *Config) WalThreshold() uint64 {
-	return uint64(c.config.wal_threshold)
-}
-
-func (c *Config) SetWalThreshold(s uint64) {
-	c.config.wal_threshold = C.uint64_t(s)
-}
-
-func (c *Config) WalFlushBeforeCommit() bool {
-	return bool(c.config.wal_flush_before_commit)
-}
-
-func (c *Config) SetWalFlushBeforeCommit(b bool) {
-	c.config.wal_flush_before_commit = C.bool(b)
-}
-
-func (c *Config) PurgingInterval() uint32 {
-	return uint32(c.config.purging_interval)
-}
-
-func (c *Config) SetPurgingInterval(s uint32) {
-	c.config.purging_interval = C.uint32_t(s)
-}
-
-func (c *Config) SeqTreeOpt() SeqTreeOpt {
-	return SeqTreeOpt(c.config.seqtree_opt)
-}
-
-func (c *Config) SetSeqTreeOpt(o SeqTreeOpt) {
-	c.config.seqtree_opt = C.fdb_seqtree_opt_t(o)
-}
-
-func (c *Config) DurabilityOpt() DurabilityOpt {
-	return DurabilityOpt(c.config.durability_opt)
-}
-
-func (c *Config) SetDurabilityOpt(o DurabilityOpt) {
-	c.config.durability_opt = C.fdb_durability_opt_t(o)
-}
-
-func (c *Config) OpenFlags() OpenFlags {
-	return OpenFlags(c.config.flags)
-}
-
-func (c *Config) SetOpenFlags(o OpenFlags) {
-	c.config.flags = C.fdb_open_flags(o)
-}
-
-func (c *Config) CompactionBufferSizeMax() uint32 {
-	return uint32(c.config.compaction_buf_maxsize)
-}
-
-func (c *Config) SetCompactionBufferSizeMax(s uint32) {
-	c.config.compaction_buf_maxsize = C.uint32_t(s)
-}
-
-func (c *Config) CleanupCacheOnClose() bool {
-	return bool(c.config.cleanup_cache_onclose)
-}
-
-func (c *Config) SetCleanupCacheOnClose(b bool) {
-	c.config.cleanup_cache_onclose = C.bool(b)
-}
-
-func (c *Config) CompressDocumentBody() bool {
-	return bool(c.config.compress_document_body)
-}
-
-func (c *Config) SetCompressDocumentBody(b bool) {
-	c.config.compress_document_body = C.bool(b)
-}
-
-func (c *Config) CompactionMode() CompactOpt {
-	return CompactOpt(c.config.compaction_mode)
-}
-
-func (c *Config) SetCompactionMode(o CompactOpt) {
-	c.config.compaction_mode = C.fdb_compaction_mode_t(o)
-}
-
-func (c *Config) CompactionThreshold() uint8 {
-	return uint8(c.config.compaction_threshold)
-}
-
-func (c *Config) SetCompactionThreshold(s uint8) {
-	c.config.compaction_threshold = C.uint8_t(s)
-}
-
-func (c *Config) CompactionMinimumFilesize() uint64 {
-	return uint64(c.config.compaction_minimum_filesize)
-}
-
-func (c *Config) SetCompactionMinimumFilesize(s uint64) {
-	c.config.compaction_minimum_filesize = C.uint64_t(s)
-}
-
-func (c *Config) CompactorSleepDuration() uint64 {
-	return uint64(c.config.compactor_sleep_duration)
-}
-
-func (c *Config) SetCompactorSleepDuration(s uint64) {
-	c.config.compactor_sleep_duration = C.uint64_t(s)
-}
-
-func (c *Config) SetCustomCompareFixed(comparator unsafe.Pointer) {
-	c.config.cmp_fixed = C.fdb_custom_cmp_fixed(comparator)
-}
-
-func (c *Config) SetCustomCompareVariable(comparator unsafe.Pointer) {
-	c.config.cmp_variable = C.fdb_custom_cmp_variable(comparator)
-}
-
-// DefaultConfig gets the default ForestDB config
+// DefaultConfig creates the default configuration
 func DefaultConfig() *Config {
-	config := C.fdb_get_default_config()
 	return &Config{
-		config: &config,
+		ChunkSize:       8,
+		BlockSize:       4 * 1024,
+		BufferCacheSize: 128 * 1024 * 1024,
+		WALThreshold:    4 * 1024,
+		Durability:      DRB_NONE,
+		OpenFlags:       OPEN_FLAG_CREATE,
+		SeqTree:         SEQTREE_USE,
+
+		CompactionMode:          COMPACT_MANUAL,
+		CompactionBufferMaxSize: 4 * 1024 * 1024,
+		CompactionThreshold:     30,
+		CompactionMinFileSize:   1024 * 1024,
+		CompactionSleep:         15 * time.Second,
 	}
+}
+
+func (c *Config) native() *C.fdb_config {
+	if c == nil {
+		c = DefaultConfig()
+	}
+
+	n := C.fdb_get_default_config()
+	n.chunksize = C.uint16_t(c.ChunkSize)
+	n.blocksize = C.uint32_t(c.BlockSize)
+	n.buffercache_size = C.uint64_t(c.BufferCacheSize)
+	n.wal_threshold = C.uint64_t(c.WALThreshold)
+	n.wal_flush_before_commit = C.bool(c.WALFlushBeforeCommit)
+	n.purging_interval = C.uint32_t(c.PurgingInterval / time.Second)
+	n.seqtree_opt = C.fdb_seqtree_opt_t(c.SeqTree)
+	n.durability_opt = C.fdb_durability_opt_t(c.Durability)
+	n.flags = C.fdb_open_flags(c.OpenFlags)
+	n.compaction_buf_maxsize = C.uint32_t(c.CompactionBufferMaxSize)
+	n.cleanup_cache_onclose = C.bool(!c.SkipCacheCleanupOnClose)
+	n.compress_document_body = C.bool(c.CompressDocumentBody)
+	n.compaction_mode = C.fdb_compaction_mode_t(c.CompactionMode)
+	n.compaction_threshold = C.uint8_t(c.CompactionThreshold)
+	n.compaction_minimum_filesize = C.uint64_t(c.CompactionMinFileSize)
+	n.compactor_sleep_duration = C.uint64_t(c.CompactionSleep / time.Second)
+	if c.CustomCompareFixed != nil {
+		n.cmp_fixed = C.fdb_custom_cmp_fixed(c.CustomCompareFixed)
+	}
+	if c.CustomCompareVariable != nil {
+		n.cmp_variable = C.fdb_custom_cmp_variable(c.CustomCompareVariable)
+	}
+
+	return &n
 }

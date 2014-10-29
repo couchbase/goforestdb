@@ -53,6 +53,24 @@ func (i *Iterator) NextMetaOnly() (*Doc, error) {
 	return &rv, nil
 }
 
+// Seek fast forward / backward an iterator to
+// return documents starting from
+// the given seek_key. If the seek key does not
+// exist, the iterator is positioned to start from
+// the next sorted key.
+func (i *Iterator) Seek(seekKey []byte) error {
+	var sk unsafe.Pointer
+	lensk := len(seekKey)
+	if lensk != 0 {
+		sk = unsafe.Pointer(&seekKey[0])
+	}
+	errNo := C.fdb_iterator_seek(i.iter, sk, C.size_t(lensk))
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
 // Close the iterator and free its associated resources
 func (i *Iterator) Close() error {
 	errNo := C.fdb_iterator_close(i.iter)

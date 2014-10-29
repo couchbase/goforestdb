@@ -118,3 +118,68 @@ func TestForestDBIteratorSeq(t *testing.T) {
 	}
 
 }
+
+func TestForestDBIteratorSeek(t *testing.T) {
+	defer os.RemoveAll("test")
+
+	db, err := Open("test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// store a bunch of values to test the iterator
+
+	db.SetKV([]byte("a"), []byte("vala"))
+	db.SetKV([]byte("b"), []byte("valb"))
+	db.SetKV([]byte("c"), []byte("valc"))
+	db.SetKV([]byte("d"), []byte("vald"))
+	db.SetKV([]byte("e"), []byte("vale"))
+	db.SetKV([]byte("f"), []byte("valf"))
+	db.SetKV([]byte("g"), []byte("valg"))
+	db.SetKV([]byte("i"), []byte("vali"))
+	db.SetKV([]byte("j"), []byte("valj"))
+
+	iter, err := db.IteratorInit([]byte("c"), []byte("j"), ITR_NONE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer iter.Close()
+
+	doc, err := iter.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := doc.Key()
+	if string(key) != "c" {
+		t.Fatalf("expected first key 'c', got %s", string(key))
+	}
+
+	// now seek to e (exists) should skip over d
+	err = iter.Seek([]byte("e"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err = iter.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	key = doc.Key()
+	if string(key) != "e" {
+		t.Fatalf("expected first key 'e', got %s", string(key))
+	}
+
+	// now seek to h (does not exist) should be on i
+	err = iter.Seek([]byte("h"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err = iter.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	key = doc.Key()
+	if string(key) != "i" {
+		t.Fatalf("expected first key 'i', got %s", string(key))
+	}
+}

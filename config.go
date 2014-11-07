@@ -179,18 +179,35 @@ func (c *Config) SetCompactorSleepDuration(s uint64) {
 	c.config.compactor_sleep_duration = C.uint64_t(s)
 }
 
-func (c *Config) SetCustomCompareFixed(comparator unsafe.Pointer) {
-	c.config.cmp_fixed = C.fdb_custom_cmp_fixed(comparator)
-}
-
-func (c *Config) SetCustomCompareVariable(comparator unsafe.Pointer) {
-	c.config.cmp_variable = C.fdb_custom_cmp_variable(comparator)
-}
-
 // DefaultConfig gets the default ForestDB config
 func DefaultConfig() *Config {
 	config := C.fdb_get_default_config()
 	return &Config{
+		config: &config,
+	}
+}
+
+// ForestDB KVStore config options
+type KVStoreConfig struct {
+	config *C.fdb_kvs_config
+}
+
+func (c *KVStoreConfig) CreateIfMissing() bool {
+	return bool(c.config.create_if_missing)
+}
+
+func (c *KVStoreConfig) SetCreateIfMissing(b bool) {
+	c.config.create_if_missing = C.bool(b)
+}
+
+func (c *KVStoreConfig) SetCustomCompare(comparator unsafe.Pointer) {
+	c.config.custom_cmp = C.fdb_custom_cmp_variable(comparator)
+}
+
+// DefaultConfig gets the default ForestDB config
+func DefaultKVStoreConfig() *KVStoreConfig {
+	config := C.fdb_get_default_kvs_config()
+	return &KVStoreConfig{
 		config: &config,
 	}
 }

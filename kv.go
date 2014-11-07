@@ -18,18 +18,18 @@ import (
 )
 
 // GetKV simplified API for key/value access to Get()
-func (d *Database) GetKV(key []byte) ([]byte, error) {
+func (k *KVStore) GetKV(key []byte) ([]byte, error) {
 
-	var k unsafe.Pointer
+	var kk unsafe.Pointer
 	if len(key) != 0 {
-		k = unsafe.Pointer(&key[0])
+		kk = unsafe.Pointer(&key[0])
 	}
 	lenk := len(key)
 
 	var bodyLen C.size_t
 	var bodyPointer unsafe.Pointer
 
-	errNo := C.fdb_get_kv(d.db, k, C.size_t(lenk), &bodyPointer, &bodyLen)
+	errNo := C.fdb_get_kv(k.db, kk, C.size_t(lenk), &bodyPointer, &bodyLen)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -40,12 +40,12 @@ func (d *Database) GetKV(key []byte) ([]byte, error) {
 }
 
 // SetKV simplified API for key/value access to Set()
-func (d *Database) SetKV(key, value []byte) error {
+func (k *KVStore) SetKV(key, value []byte) error {
 
-	var k, v unsafe.Pointer
+	var kk, v unsafe.Pointer
 
 	if len(key) != 0 {
-		k = unsafe.Pointer(&key[0])
+		kk = unsafe.Pointer(&key[0])
 	}
 
 	if len(value) != 0 {
@@ -55,7 +55,7 @@ func (d *Database) SetKV(key, value []byte) error {
 	lenk := len(key)
 	lenv := len(value)
 
-	errNo := C.fdb_set_kv(d.db, k, C.size_t(lenk), v, C.size_t(lenv))
+	errNo := C.fdb_set_kv(k.db, kk, C.size_t(lenk), v, C.size_t(lenv))
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -63,16 +63,16 @@ func (d *Database) SetKV(key, value []byte) error {
 }
 
 // DeleteKV simplified API for key/value access to Delete()
-func (d *Database) DeleteKV(key []byte) error {
+func (k *KVStore) DeleteKV(key []byte) error {
 
-	var k unsafe.Pointer
+	var kk unsafe.Pointer
 	if len(key) != 0 {
-		k = unsafe.Pointer(&key[0])
+		kk = unsafe.Pointer(&key[0])
 	}
 
 	lenk := len(key)
 
-	errNo := C.fdb_del_kv(d.db, k, C.size_t(lenk))
+	errNo := C.fdb_del_kv(k.db, kk, C.size_t(lenk))
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}

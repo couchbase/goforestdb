@@ -14,70 +14,25 @@ package forestdb
 //#include <libforestdb/forestdb.h>
 import "C"
 
-import (
-	"unsafe"
-)
-
-// Database handle
-type Database struct {
+// KVStore handle
+type KVStore struct {
+	f  *File
 	db *C.fdb_handle
 }
 
-// Open opens the database with a given file name
-func Open(filename string, config *Config) (*Database, error) {
-
-	if config == nil {
-		config = DefaultConfig()
-	}
-
-	dbname := C.CString(filename)
-	defer C.free(unsafe.Pointer(dbname))
-
-	rv := Database{}
-	errNo := C.fdb_open(&rv.db, dbname, config.config)
+// Close the KVStore and release related resources.
+func (k *KVStore) Close() error {
+	errNo := C.fdb_kvs_close(k.db)
 	if errNo != RESULT_SUCCESS {
-		return nil, Error(errNo)
+		return Error(errNo)
 	}
-	return &rv, nil
+	return nil
 }
 
-// Open opens the database with a given file name
-// The documents in the database will be indexed using the customized compare
-// function. The key size MUST be fixed and same as the chunk_size in the
-// configuration. The typical example is to use a primitive type (e.g., int,
-// double) as a primary key and the numeric compare function as a custom
-// function.
-func OpenCmpFixed(filename string, config *Config) (*Database, error) {
-
-	if config == nil {
-		config = DefaultConfig()
-	}
-
-	dbname := C.CString(filename)
-	defer C.free(unsafe.Pointer(dbname))
-
-	rv := Database{}
-	errNo := C.fdb_open_cmp_fixed(&rv.db, dbname, config.config)
-	if errNo != RESULT_SUCCESS {
-		return nil, Error(errNo)
-	}
-	return &rv, nil
-}
-
-// Open opens the database with a given file name
-// The documents in the database will be indexed using the customized compare
-// function. The key size can be variable.
-func OpenCmpVariable(filename string, config *Config) (*Database, error) {
-
-	if config == nil {
-		config = DefaultConfig()
-	}
-
-	dbname := C.CString(filename)
-	defer C.free(unsafe.Pointer(dbname))
-
-	rv := Database{}
-	errNo := C.fdb_open_cmp_variable(&rv.db, dbname, config.config)
+// Info returns the information about a given kvstore
+func (k *KVStore) Info() (*KVStoreInfo, error) {
+	rv := KVStoreInfo{}
+	errNo := C.fdb_get_kvs_info(k.db, &rv.info)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -85,8 +40,8 @@ func OpenCmpVariable(filename string, config *Config) (*Database, error) {
 }
 
 // Get retrieves the metadata and doc body for a given key
-func (d *Database) Get(doc *Doc) error {
-	errNo := C.fdb_get(d.db, doc.doc)
+func (k *KVStore) Get(doc *Doc) error {
+	errNo := C.fdb_get(k.db, doc.doc)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -94,8 +49,8 @@ func (d *Database) Get(doc *Doc) error {
 }
 
 // GetMetaOnly retrieves the metadata for a given key
-func (d *Database) GetMetaOnly(doc *Doc) error {
-	errNo := C.fdb_get_metaonly(d.db, doc.doc)
+func (k *KVStore) GetMetaOnly(doc *Doc) error {
+	errNo := C.fdb_get_metaonly(k.db, doc.doc)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -103,8 +58,8 @@ func (d *Database) GetMetaOnly(doc *Doc) error {
 }
 
 // GetBySeq retrieves the metadata and doc body for a given sequence number
-func (d *Database) GetBySeq(doc *Doc) error {
-	errNo := C.fdb_get_byseq(d.db, doc.doc)
+func (k *KVStore) GetBySeq(doc *Doc) error {
+	errNo := C.fdb_get_byseq(k.db, doc.doc)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -112,8 +67,8 @@ func (d *Database) GetBySeq(doc *Doc) error {
 }
 
 // GetMetaOnlyBySeq retrieves the metadata for a given sequence number
-func (d *Database) GetMetaOnlyBySeq(doc *Doc) error {
-	errNo := C.fdb_get_metaonly_byseq(d.db, doc.doc)
+func (k *KVStore) GetMetaOnlyBySeq(doc *Doc) error {
+	errNo := C.fdb_get_metaonly_byseq(k.db, doc.doc)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -121,8 +76,8 @@ func (d *Database) GetMetaOnlyBySeq(doc *Doc) error {
 }
 
 // GetByOffset retrieves a doc's metadata and body with a given doc offset in the database file
-func (d *Database) GetByOffset(doc *Doc) error {
-	errNo := C.fdb_get_byoffset(d.db, doc.doc)
+func (k *KVStore) GetByOffset(doc *Doc) error {
+	errNo := C.fdb_get_byoffset(k.db, doc.doc)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -130,8 +85,8 @@ func (d *Database) GetByOffset(doc *Doc) error {
 }
 
 // Set update the metadata and doc body for a given key
-func (d *Database) Set(doc *Doc) error {
-	errNo := C.fdb_set(d.db, doc.doc)
+func (k *KVStore) Set(doc *Doc) error {
+	errNo := C.fdb_set(k.db, doc.doc)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -139,30 +94,8 @@ func (d *Database) Set(doc *Doc) error {
 }
 
 // Delete deletes a key, its metadata and value
-func (d *Database) Delete(doc *Doc) error {
-	errNo := C.fdb_del(d.db, doc.doc)
-	if errNo != RESULT_SUCCESS {
-		return Error(errNo)
-	}
-	return nil
-}
-
-// Compact the current database file and create a new compacted file
-func (d *Database) Compact(newfilename string) error {
-
-	f := C.CString(newfilename)
-	defer C.free(unsafe.Pointer(f))
-
-	errNo := C.fdb_compact(d.db, f)
-	if errNo != RESULT_SUCCESS {
-		return Error(errNo)
-	}
-	return nil
-}
-
-// Close the database file
-func (d *Database) Close() error {
-	errNo := C.fdb_close(d.db)
+func (k *KVStore) Delete(doc *Doc) error {
+	errNo := C.fdb_del(k.db, doc.doc)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}

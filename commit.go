@@ -12,30 +12,11 @@ package forestdb
 //#include <libforestdb/forestdb.h>
 import "C"
 
-// Options to be passed to Commit()
-type CommitOpt uint8
-
-const (
-	// Perform commit without any options.
-	COMMIT_NORMAL CommitOpt = 0x00
-	// Manually flush WAL entries even though it doesn't reach the configured threshol
-	COMMIT_MANUAL_WAL_FLUSH CommitOpt = 0x01
-)
-
-// Commit all pending changes into disk.
-func (d *Database) Commit(opt CommitOpt) error {
-	errNo := C.fdb_commit(d.db, C.fdb_commit_opt_t(opt))
-	if errNo != RESULT_SUCCESS {
-		return Error(errNo)
-	}
-	return nil
-}
-
 // SnapshotOpen creates an snapshot of a database file in ForestDB
-func (d *Database) SnapshotOpen(sn SeqNum) (*Database, error) {
-	rv := Database{}
+func (k *KVStore) SnapshotOpen(sn SeqNum) (*KVStore, error) {
+	rv := KVStore{}
 
-	errNo := C.fdb_snapshot_open(d.db, &rv.db, C.fdb_seqnum_t(sn))
+	errNo := C.fdb_snapshot_open(k.db, &rv.db, C.fdb_seqnum_t(sn))
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -43,8 +24,8 @@ func (d *Database) SnapshotOpen(sn SeqNum) (*Database, error) {
 }
 
 // Rollback a database to a specified point represented by the sequence number
-func (d *Database) Rollback(sn SeqNum) error {
-	errNo := C.fdb_rollback(&d.db, C.fdb_seqnum_t(sn))
+func (k *KVStore) Rollback(sn SeqNum) error {
+	errNo := C.fdb_rollback(&k.db, C.fdb_seqnum_t(sn))
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}

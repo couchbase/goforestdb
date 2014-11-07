@@ -11,29 +11,35 @@ import (
 func TestForestCustomComparator(t *testing.T) {
 	defer os.RemoveAll("test")
 
-	config := forestdb.DefaultConfig()
-	config.SetCustomCompareVariable(unsafe.Pointer(CompareBytesReversedPointer))
-
-	db, err := forestdb.OpenCmpVariable("test", config)
+	dbfile, err := forestdb.Open("test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer dbfile.Close()
+
+	kvconfig := forestdb.DefaultKVStoreConfig()
+	kvconfig.SetCustomCompare(unsafe.Pointer(CompareBytesReversedPointer))
+
+	kvstore, err := dbfile.OpenKVStore("tkv", kvconfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
 
 	// store a bunch of values to test the iterator
 
-	db.SetKV([]byte("a"), []byte("vala"))
-	db.SetKV([]byte("b"), []byte("valb"))
-	db.SetKV([]byte("c"), []byte("valc"))
-	db.SetKV([]byte("d"), []byte("vald"))
-	db.SetKV([]byte("e"), []byte("vale"))
-	db.SetKV([]byte("f"), []byte("valf"))
-	db.SetKV([]byte("g"), []byte("valg"))
-	db.SetKV([]byte("h"), []byte("valh"))
-	db.SetKV([]byte("i"), []byte("vali"))
-	db.SetKV([]byte("j"), []byte("valj"))
+	kvstore.SetKV([]byte("a"), []byte("vala"))
+	kvstore.SetKV([]byte("b"), []byte("valb"))
+	kvstore.SetKV([]byte("c"), []byte("valc"))
+	kvstore.SetKV([]byte("d"), []byte("vald"))
+	kvstore.SetKV([]byte("e"), []byte("vale"))
+	kvstore.SetKV([]byte("f"), []byte("valf"))
+	kvstore.SetKV([]byte("g"), []byte("valg"))
+	kvstore.SetKV([]byte("h"), []byte("valh"))
+	kvstore.SetKV([]byte("i"), []byte("vali"))
+	kvstore.SetKV([]byte("j"), []byte("valj"))
 
-	iter, err := db.IteratorInit([]byte("g"), []byte("c"), forestdb.ITR_NONE)
+	iter, err := kvstore.IteratorInit([]byte("g"), []byte("c"), forestdb.ITR_NONE)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +62,7 @@ func TestForestCustomComparator(t *testing.T) {
 		t.Errorf("expected fist key to be c, got %s", firstKey)
 	}
 	if string(lastKey) != "c" {
-		t.Errorf("expected lats key to be g, got %s", lastKey)
+		t.Errorf("expected last key to be g, got %s", lastKey)
 	}
 	if err != forestdb.RESULT_ITERATOR_FAIL {
 		t.Errorf("expected %#v, got %#v", forestdb.RESULT_ITERATOR_FAIL, err)

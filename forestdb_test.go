@@ -16,19 +16,25 @@ import (
 func TestForestDBCrud(t *testing.T) {
 	defer os.RemoveAll("test")
 
-	db, err := Open("test", nil)
+	dbfile, err := Open("test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer dbfile.Close()
 
-	// check the dbInfo
-	dbInfo, err := db.DbInfo()
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
+
+	// check the kvstore info
+	kvInfo, err := kvstore.Info()
 	if err != nil {
 		t.Error(err)
 	}
-	if dbInfo.LastSeqNum() != 0 {
-		t.Errorf("expected last_seqnum to be 0, got %d", dbInfo.LastSeqNum())
+	if kvInfo.LastSeqNum() != 0 {
+		t.Errorf("expected last_seqnum to be 0, got %d", kvInfo.LastSeqNum())
 	}
 
 	// get a non-existant key
@@ -36,7 +42,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Get(doc)
+	err = kvstore.Get(doc)
 	if err != RESULT_KEY_NOT_FOUND {
 		t.Errorf("expected %v, got %v", RESULT_KEY_NOT_FOUND, err)
 	}
@@ -47,7 +53,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Set(doc)
+	err = kvstore.Set(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -58,7 +64,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Get(doc)
+	err = kvstore.Get(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -72,7 +78,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Set(doc)
+	err = kvstore.Set(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -83,7 +89,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Get(doc)
+	err = kvstore.Get(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,7 +103,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Delete(doc)
+	err = kvstore.Delete(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -108,7 +114,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Get(doc)
+	err = kvstore.Get(doc)
 	if err != RESULT_KEY_NOT_FOUND {
 		t.Error(err)
 	}
@@ -119,7 +125,7 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Delete(doc)
+	err = kvstore.Delete(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -130,18 +136,18 @@ func TestForestDBCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Delete(doc)
+	err = kvstore.Delete(doc)
 	if err != nil {
 		t.Error(err)
 	}
 	doc.Close()
 
 	// check the db info at the end
-	dbInfo, err = db.DbInfo()
+	kvInfo, err = kvstore.Info()
 	if err != nil {
 		t.Error(err)
 	}
-	if dbInfo.LastSeqNum() != 5 {
-		t.Errorf("expected last_seqnum to be 0, got %d", dbInfo.LastSeqNum())
+	if kvInfo.LastSeqNum() != 5 {
+		t.Errorf("expected last_seqnum to be 0, got %d", kvInfo.LastSeqNum())
 	}
 }

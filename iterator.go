@@ -81,7 +81,7 @@ func (i *Iterator) Close() error {
 }
 
 // IteratorInit creates an iterator to traverse a ForestDB snapshot by key range
-func (d *Database) IteratorInit(startKey, endKey []byte, opt IteratorOpt) (*Iterator, error) {
+func (k *KVStore) IteratorInit(startKey, endKey []byte, opt IteratorOpt) (*Iterator, error) {
 	var sk, ek unsafe.Pointer
 
 	lensk := len(startKey)
@@ -96,7 +96,7 @@ func (d *Database) IteratorInit(startKey, endKey []byte, opt IteratorOpt) (*Iter
 	}
 
 	rv := Iterator{}
-	errNo := C.fdb_iterator_init(d.db, &rv.iter, sk, C.size_t(lensk), ek, C.size_t(lenek), C.fdb_iterator_opt_t(opt))
+	errNo := C.fdb_iterator_init(k.db, &rv.iter, sk, C.size_t(lensk), ek, C.size_t(lenek), C.fdb_iterator_opt_t(opt))
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -104,9 +104,9 @@ func (d *Database) IteratorInit(startKey, endKey []byte, opt IteratorOpt) (*Iter
 }
 
 // IteratorSequenceInit create an iterator to traverse a ForestDB snapshot by sequence number range
-func (d *Database) IteratorSequenceInit(startSeq, endSeq SeqNum, opt IteratorOpt) (*Iterator, error) {
+func (k *KVStore) IteratorSequenceInit(startSeq, endSeq SeqNum, opt IteratorOpt) (*Iterator, error) {
 	rv := Iterator{}
-	errNo := C.fdb_iterator_sequence_init(d.db, &rv.iter, C.fdb_seqnum_t(startSeq), C.fdb_seqnum_t(endSeq), C.fdb_iterator_opt_t(opt))
+	errNo := C.fdb_iterator_sequence_init(k.db, &rv.iter, C.fdb_seqnum_t(startSeq), C.fdb_seqnum_t(endSeq), C.fdb_iterator_opt_t(opt))
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}

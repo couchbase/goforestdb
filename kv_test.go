@@ -16,15 +16,21 @@ import (
 func TestForestDBKVCrud(t *testing.T) {
 	defer os.RemoveAll("test")
 
-	db, err := Open("test", nil)
+	dbfile, err := Open("test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
 
 	// get a non-existant key
 	var val []byte
-	val, err = db.GetKV([]byte("doesnotexist"))
+	val, err = kvstore.GetKV([]byte("doesnotexist"))
 	if val != nil {
 		t.Error("expected nil value")
 	}
@@ -33,13 +39,13 @@ func TestForestDBKVCrud(t *testing.T) {
 	}
 
 	// put a new key
-	err = db.SetKV([]byte("key1"), []byte("value1"))
+	err = kvstore.SetKV([]byte("key1"), []byte("value1"))
 	if err != nil {
 		t.Error(err)
 	}
 
 	// lookup that key
-	val, err = db.GetKV([]byte("key1"))
+	val, err = kvstore.GetKV([]byte("key1"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -48,13 +54,13 @@ func TestForestDBKVCrud(t *testing.T) {
 	}
 
 	// update it
-	err = db.SetKV([]byte("key1"), []byte("value1-updated"))
+	err = kvstore.SetKV([]byte("key1"), []byte("value1-updated"))
 	if err != nil {
 		t.Error(err)
 	}
 
 	// look it up again
-	val, err = db.GetKV([]byte("key1"))
+	val, err = kvstore.GetKV([]byte("key1"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -63,13 +69,13 @@ func TestForestDBKVCrud(t *testing.T) {
 	}
 
 	// delete it
-	err = db.DeleteKV([]byte("key1"))
+	err = kvstore.DeleteKV([]byte("key1"))
 	if err != nil {
 		t.Error(err)
 	}
 
 	// look it up again
-	val, err = db.GetKV([]byte("key1"))
+	val, err = kvstore.GetKV([]byte("key1"))
 	if err != RESULT_KEY_NOT_FOUND {
 		t.Error(err)
 	}
@@ -78,13 +84,13 @@ func TestForestDBKVCrud(t *testing.T) {
 	}
 
 	// delete it again
-	err = db.DeleteKV([]byte("key1"))
+	err = kvstore.DeleteKV([]byte("key1"))
 	if err != nil {
 		t.Error(err)
 	}
 
 	// dete non-existant key
-	err = db.DeleteKV([]byte("doesnotext"))
+	err = kvstore.DeleteKV([]byte("doesnotext"))
 	if err != nil {
 		t.Error(err)
 	}

@@ -9,18 +9,24 @@ func TestSnapshotAndRollback(t *testing.T) {
 
 	defer os.RemoveAll("test")
 
-	db, err := Open("test", nil)
+	dbfile, err := Open("test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
 
 	// put a new key
 	doc, err := NewDoc([]byte("key1"), nil, []byte("value1"))
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Set(doc)
+	err = kvstore.Set(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -28,13 +34,13 @@ func TestSnapshotAndRollback(t *testing.T) {
 	doc.Close()
 
 	// commit changes
-	err = db.Commit(COMMIT_NORMAL)
+	err = dbfile.Commit(COMMIT_NORMAL)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// get a snapshot
-	dbSnapshot, err := db.SnapshotOpen(snapshotSeqNum)
+	dbSnapshot, err := kvstore.SnapshotOpen(snapshotSeqNum)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +51,7 @@ func TestSnapshotAndRollback(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Set(doc)
+	err = kvstore.Set(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,7 +62,7 @@ func TestSnapshotAndRollback(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Get(doc)
+	err = kvstore.Get(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -82,7 +88,7 @@ func TestSnapshotAndRollback(t *testing.T) {
 	doc.Close()
 
 	// now ask the db to rollback to the snapshot seqnum
-	err = db.Rollback(snapshotSeqNum)
+	err = kvstore.Rollback(snapshotSeqNum)
 	if err != nil {
 		t.Error(err)
 	}
@@ -92,7 +98,7 @@ func TestSnapshotAndRollback(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.Get(doc)
+	err = kvstore.Get(doc)
 	if err != nil {
 		t.Error(err)
 	}

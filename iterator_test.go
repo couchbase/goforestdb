@@ -16,26 +16,32 @@ import (
 func TestForestDBIterator(t *testing.T) {
 	defer os.RemoveAll("test")
 
-	db, err := Open("test", nil)
+	dbfile, err := Open("test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
 
 	// store a bunch of values to test the iterator
 
-	db.SetKV([]byte("a"), []byte("vala"))
-	db.SetKV([]byte("b"), []byte("valb"))
-	db.SetKV([]byte("c"), []byte("valc"))
-	db.SetKV([]byte("d"), []byte("vald"))
-	db.SetKV([]byte("e"), []byte("vale"))
-	db.SetKV([]byte("f"), []byte("valf"))
-	db.SetKV([]byte("g"), []byte("valg"))
-	db.SetKV([]byte("h"), []byte("valh"))
-	db.SetKV([]byte("i"), []byte("vali"))
-	db.SetKV([]byte("j"), []byte("valj"))
+	kvstore.SetKV([]byte("a"), []byte("vala"))
+	kvstore.SetKV([]byte("b"), []byte("valb"))
+	kvstore.SetKV([]byte("c"), []byte("valc"))
+	kvstore.SetKV([]byte("d"), []byte("vald"))
+	kvstore.SetKV([]byte("e"), []byte("vale"))
+	kvstore.SetKV([]byte("f"), []byte("valf"))
+	kvstore.SetKV([]byte("g"), []byte("valg"))
+	kvstore.SetKV([]byte("h"), []byte("valh"))
+	kvstore.SetKV([]byte("i"), []byte("vali"))
+	kvstore.SetKV([]byte("j"), []byte("valj"))
 
-	iter, err := db.IteratorInit([]byte("c"), []byte("g"), ITR_NONE)
+	iter, err := kvstore.IteratorInit([]byte("c"), []byte("g"), ITR_NONE)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,26 +75,32 @@ func TestForestDBIterator(t *testing.T) {
 func TestForestDBIteratorSeq(t *testing.T) {
 	defer os.RemoveAll("test")
 
-	db, err := Open("test", nil)
+	dbfile, err := Open("test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
 
 	// store a bunch of values to test the iterator
 
-	db.SetKV([]byte("a"), []byte("vala"))
-	db.SetKV([]byte("b"), []byte("valb"))
-	db.SetKV([]byte("c"), []byte("valc"))
-	db.SetKV([]byte("d"), []byte("vald"))
-	db.SetKV([]byte("e"), []byte("vale"))
-	db.SetKV([]byte("f"), []byte("valf"))
-	db.SetKV([]byte("g"), []byte("valg"))
-	db.SetKV([]byte("h"), []byte("valh"))
-	db.SetKV([]byte("i"), []byte("vali"))
-	db.SetKV([]byte("j"), []byte("valj"))
+	kvstore.SetKV([]byte("a"), []byte("vala"))
+	kvstore.SetKV([]byte("b"), []byte("valb"))
+	kvstore.SetKV([]byte("c"), []byte("valc"))
+	kvstore.SetKV([]byte("d"), []byte("vald"))
+	kvstore.SetKV([]byte("e"), []byte("vale"))
+	kvstore.SetKV([]byte("f"), []byte("valf"))
+	kvstore.SetKV([]byte("g"), []byte("valg"))
+	kvstore.SetKV([]byte("h"), []byte("valh"))
+	kvstore.SetKV([]byte("i"), []byte("vali"))
+	kvstore.SetKV([]byte("j"), []byte("valj"))
 
-	iter, err := db.IteratorSequenceInit(3, 7, ITR_NONE)
+	iter, err := kvstore.IteratorSequenceInit(3, 7, ITR_NONE)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,25 +134,31 @@ func TestForestDBIteratorSeq(t *testing.T) {
 func TestForestDBIteratorSeek(t *testing.T) {
 	defer os.RemoveAll("test")
 
-	db, err := Open("test", nil)
+	dbfile, err := Open("test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
 
 	// store a bunch of values to test the iterator
 
-	db.SetKV([]byte("a"), []byte("vala"))
-	db.SetKV([]byte("b"), []byte("valb"))
-	db.SetKV([]byte("c"), []byte("valc"))
-	db.SetKV([]byte("d"), []byte("vald"))
-	db.SetKV([]byte("e"), []byte("vale"))
-	db.SetKV([]byte("f"), []byte("valf"))
-	db.SetKV([]byte("g"), []byte("valg"))
-	db.SetKV([]byte("i"), []byte("vali"))
-	db.SetKV([]byte("j"), []byte("valj"))
+	kvstore.SetKV([]byte("a"), []byte("vala"))
+	kvstore.SetKV([]byte("b"), []byte("valb"))
+	kvstore.SetKV([]byte("c"), []byte("valc"))
+	kvstore.SetKV([]byte("d"), []byte("vald"))
+	kvstore.SetKV([]byte("e"), []byte("vale"))
+	kvstore.SetKV([]byte("f"), []byte("valf"))
+	kvstore.SetKV([]byte("g"), []byte("valg"))
+	kvstore.SetKV([]byte("i"), []byte("vali"))
+	kvstore.SetKV([]byte("j"), []byte("valj"))
 
-	iter, err := db.IteratorInit([]byte("c"), []byte("j"), ITR_NONE)
+	iter, err := kvstore.IteratorInit([]byte("c"), []byte("j"), ITR_NONE)
 	if err != nil {
 		t.Fatal(err)
 	}

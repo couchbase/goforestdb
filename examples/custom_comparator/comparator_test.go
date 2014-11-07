@@ -12,7 +12,7 @@ func TestForestCustomComparator(t *testing.T) {
 	defer os.RemoveAll("test")
 
 	config := forestdb.DefaultConfig()
-	config.SetCustomCompareVariable(unsafe.Pointer(CompareBytesReversedPointer))
+	config.CustomCompareVariable = unsafe.Pointer(CompareBytesReversedPointer)
 
 	db, err := forestdb.OpenCmpVariable("test", config)
 	if err != nil {

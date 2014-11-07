@@ -25,16 +25,11 @@ type Database struct {
 
 // Open opens the database with a given file name
 func Open(filename string, config *Config) (*Database, error) {
-
-	if config == nil {
-		config = DefaultConfig()
-	}
-
 	dbname := C.CString(filename)
 	defer C.free(unsafe.Pointer(dbname))
 
 	rv := Database{}
-	errNo := C.fdb_open(&rv.db, dbname, config.config)
+	errNo := C.fdb_open(&rv.db, dbname, config.native())
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -48,16 +43,11 @@ func Open(filename string, config *Config) (*Database, error) {
 // double) as a primary key and the numeric compare function as a custom
 // function.
 func OpenCmpFixed(filename string, config *Config) (*Database, error) {
-
-	if config == nil {
-		config = DefaultConfig()
-	}
-
 	dbname := C.CString(filename)
 	defer C.free(unsafe.Pointer(dbname))
 
 	rv := Database{}
-	errNo := C.fdb_open_cmp_fixed(&rv.db, dbname, config.config)
+	errNo := C.fdb_open_cmp_fixed(&rv.db, dbname, config.native())
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -68,16 +58,11 @@ func OpenCmpFixed(filename string, config *Config) (*Database, error) {
 // The documents in the database will be indexed using the customized compare
 // function. The key size can be variable.
 func OpenCmpVariable(filename string, config *Config) (*Database, error) {
-
-	if config == nil {
-		config = DefaultConfig()
-	}
-
 	dbname := C.CString(filename)
 	defer C.free(unsafe.Pointer(dbname))
 
 	rv := Database{}
-	errNo := C.fdb_open_cmp_variable(&rv.db, dbname, config.config)
+	errNo := C.fdb_open_cmp_variable(&rv.db, dbname, config.native())
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}

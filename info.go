@@ -16,32 +16,32 @@ import (
 	"fmt"
 )
 
-// DatabaseInfo stores information about a given database file
-type DatabaseInfo struct {
-	info C.fdb_info
+// FileInfo stores information about a given file
+type FileInfo struct {
+	info C.fdb_file_info
 }
 
-func (i *DatabaseInfo) Filename() string {
+func (i *FileInfo) Filename() string {
 	return C.GoString(i.info.filename)
 }
 
-func (i *DatabaseInfo) NewFilename() string {
+func (i *FileInfo) NewFilename() string {
 	return C.GoString(i.info.new_filename)
 }
 
-func (i *DatabaseInfo) DocCount() uint64 {
+func (i *FileInfo) DocCount() uint64 {
 	return uint64(i.info.doc_count)
 }
 
-func (i *DatabaseInfo) SpaceUsed() uint64 {
+func (i *FileInfo) SpaceUsed() uint64 {
 	return uint64(i.info.space_used)
 }
 
-func (i *DatabaseInfo) FileSize() uint64 {
+func (i *FileInfo) FileSize() uint64 {
 	return uint64(i.info.file_size)
 }
 
-func (i *DatabaseInfo) String() string {
+func (i *FileInfo) String() string {
 	return fmt.Sprintf("filename: %s new_filename: %s doc_count: %d space_used: %d file_size: %d", i.Filename(), i.NewFilename(), i.DocCount(), i.SpaceUsed(), i.FileSize())
 }
 

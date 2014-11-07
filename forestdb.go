@@ -17,7 +17,7 @@ import "C"
 // KVStore handle
 type KVStore struct {
 	f  *File
-	db *C.fdb_handle
+	db *C.fdb_kvs_handle
 }
 
 // Close the KVStore and release related resources.

@@ -111,9 +111,9 @@ func (f *File) EstimateSpaceUsed() int {
 }
 
 // DbInfo returns the information about a given database handle
-func (f *File) DbInfo() (*DatabaseInfo, error) {
-	rv := DatabaseInfo{}
-	errNo := C.fdb_get_dbinfo(f.dbfile, &rv.info)
+func (f *File) Info() (*FileInfo, error) {
+	rv := FileInfo{}
+	errNo := C.fdb_get_file_info(f.dbfile, &rv.info)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}

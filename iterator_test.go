@@ -45,6 +45,7 @@ func TestForestDBIterator(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer iter.Close()
 
 	doc, err := iter.Next()
 	count := 0
@@ -104,6 +105,7 @@ func TestForestDBIteratorSeq(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer iter.Close()
 
 	doc, err := iter.Next()
 	count := 0
@@ -200,4 +202,58 @@ func TestForestDBIteratorSeek(t *testing.T) {
 	if string(key) != "i" {
 		t.Fatalf("expected first key 'i', got %s", string(key))
 	}
+}
+
+func TestForestDBIteratorPrev(t *testing.T) {
+	defer os.RemoveAll("test")
+
+	dbfile, err := Open("test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
+
+	// store a bunch of values to test the iterator
+
+	kvstore.SetKV([]byte("a"), []byte("vala"))
+	kvstore.SetKV([]byte("b"), []byte("valb"))
+	kvstore.SetKV([]byte("c"), []byte("valc"))
+	kvstore.SetKV([]byte("d"), []byte("vald"))
+	kvstore.SetKV([]byte("e"), []byte("vale"))
+	kvstore.SetKV([]byte("f"), []byte("valf"))
+	kvstore.SetKV([]byte("g"), []byte("valg"))
+	kvstore.SetKV([]byte("h"), []byte("valh"))
+	kvstore.SetKV([]byte("i"), []byte("vali"))
+	kvstore.SetKV([]byte("j"), []byte("valj"))
+
+	iter, err := kvstore.IteratorInit([]byte("a"), []byte("j"), ITR_NONE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer iter.Close()
+
+	err = iter.Seek([]byte("e"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := iter.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err = iter.Prev()
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := doc.Key()
+	if string(key) != "d" {
+		t.Fatalf("expected first key 'd', got %s", string(key))
+	}
+
 }

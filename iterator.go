@@ -33,6 +33,16 @@ type Iterator struct {
 	iter *C.fdb_iterator
 }
 
+// Prev get the previous item (key, metdata, doc body) from the iterator
+func (i *Iterator) Prev() (*Doc, error) {
+	rv := Doc{}
+	errNo := C.fdb_iterator_prev(i.iter, &rv.doc)
+	if errNo != RESULT_SUCCESS {
+		return nil, Error(errNo)
+	}
+	return &rv, nil
+}
+
 // Next gets the next item (key, metadata, doc body) from the iterator
 func (i *Iterator) Next() (*Doc, error) {
 	rv := Doc{}

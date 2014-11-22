@@ -157,3 +157,20 @@ func (f *File) OpenKVStore(name string, config *KVStoreConfig) (*KVStore, error)
 func (f *File) OpenKVStoreDefault(config *KVStoreConfig) (*KVStore, error) {
 	return f.OpenKVStore("default", config)
 }
+
+// Destroy destroys all resources associated with a ForestDB file permanently
+func Destroy(filename string, config *Config) error {
+
+	if config == nil {
+		config = DefaultConfig()
+	}
+
+	dbname := C.CString(filename)
+	defer C.free(unsafe.Pointer(dbname))
+
+	errNo := C.fdb_destroy(dbname, config.config)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}

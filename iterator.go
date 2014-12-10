@@ -26,6 +26,20 @@ const (
 	ITR_META_ONLY IteratorOpt = 0x01
 	// Return only non-deleted items through iterator
 	ITR_NO_DELETES IteratorOpt = 0x02
+	// The lowest key specified will not be returned by the iterator
+	FDB_ITR_SKIP_MIN_KEY IteratorOpt = 0x04
+	//The highest key specified will not be returned by the iterator
+	FDB_ITR_SKIP_MAX_KEY IteratorOpt = 0x08
+)
+
+// ForestDB seek options
+type SeekOpt uint8
+
+const (
+	// If seek_key does not exist return the next sorted key higher than it
+	FDB_ITR_SEEK_HIGHER SeekOpt = 0x00
+	// If seek_key does not exist return the previous sorted key lower than it
+	FDB_ITR_SEEK_LOWER SeekOpt = 0x01
 )
 
 // Iterator handle
@@ -33,30 +47,38 @@ type Iterator struct {
 	iter *C.fdb_iterator
 }
 
-// Prev get the previous item (key, metdata, doc body) from the iterator
-func (i *Iterator) Prev() (*Doc, error) {
+// Prev advances the iterator backwards
+func (i *Iterator) Prev() error {
+	errNo := C.fdb_iterator_prev(i.iter)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// Next advances the iterator forward
+func (i *Iterator) Next() error {
+	errNo := C.fdb_iterator_next(i.iter)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// Get gets the current item (key, metadata, doc body) from the iterator
+func (i *Iterator) Get() (*Doc, error) {
 	rv := Doc{}
-	errNo := C.fdb_iterator_prev(i.iter, &rv.doc)
+	errNo := C.fdb_iterator_get_metaonly(i.iter, &rv.doc)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
 	return &rv, nil
 }
 
-// Next gets the next item (key, metadata, doc body) from the iterator
-func (i *Iterator) Next() (*Doc, error) {
+// GetMetaOnly gets the current item (key, metadata, offset to doc body) from the iterator
+func (i *Iterator) GetMetaOnly() (*Doc, error) {
 	rv := Doc{}
-	errNo := C.fdb_iterator_next(i.iter, &rv.doc)
-	if errNo != RESULT_SUCCESS {
-		return nil, Error(errNo)
-	}
-	return &rv, nil
-}
-
-// NextMetaOnly gets the next item (key, metadata, offset to doc body) from the iterator
-func (i *Iterator) NextMetaOnly() (*Doc, error) {
-	rv := Doc{}
-	errNo := C.fdb_iterator_next_metaonly(i.iter, &rv.doc)
+	errNo := C.fdb_iterator_get_metaonly(i.iter, &rv.doc)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -66,15 +88,35 @@ func (i *Iterator) NextMetaOnly() (*Doc, error) {
 // Seek fast forward / backward an iterator to
 // return documents starting from
 // the given seek_key. If the seek key does not
-// exist, the iterator is positioned to start from
-// the next sorted key.
-func (i *Iterator) Seek(seekKey []byte) error {
+// exist, the iterator is positioned based on
+// the specified dir (either before or after).
+func (i *Iterator) Seek(seekKey []byte, dir SeekOpt) error {
 	var sk unsafe.Pointer
 	lensk := len(seekKey)
 	if lensk != 0 {
 		sk = unsafe.Pointer(&seekKey[0])
 	}
-	errNo := C.fdb_iterator_seek(i.iter, sk, C.size_t(lensk))
+	errNo := C.fdb_iterator_seek(i.iter, sk, C.size_t(lensk), C.fdb_iterator_seek_opt_t(dir))
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// SeekMin moves iterator to the smallest key
+// of the iteration
+func (i *Iterator) SeekMin() error {
+	errNo := C.fdb_iterator_seek_to_min(i.iter)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
+// SeekMax moves iterator to the largest key
+// of the iteration
+func (i *Iterator) SeekMax() error {
+	errNo := C.fdb_iterator_seek_to_max(i.iter)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}

@@ -47,7 +47,7 @@ func TestForestDBIterator(t *testing.T) {
 	}
 	defer iter.Close()
 
-	doc, err := iter.Next()
+	doc, err := iter.Get()
 	count := 0
 	var firstKey, lastKey []byte
 	for err == nil {
@@ -56,7 +56,10 @@ func TestForestDBIterator(t *testing.T) {
 			firstKey = doc.Key()
 		}
 		lastKey = doc.Key()
-		doc, err = iter.Next()
+		err = iter.Next()
+		if err == nil {
+			doc, err = iter.Get()
+		}
 	}
 	if count != 5 {
 		t.Errorf("exptected to iterate 5, saw %d", count)
@@ -107,7 +110,7 @@ func TestForestDBIteratorSeq(t *testing.T) {
 	}
 	defer iter.Close()
 
-	doc, err := iter.Next()
+	doc, err := iter.Get()
 	count := 0
 	var firstKey, lastKey []byte
 	for err == nil {
@@ -116,7 +119,10 @@ func TestForestDBIteratorSeq(t *testing.T) {
 			firstKey = doc.Key()
 		}
 		lastKey = doc.Key()
-		doc, err = iter.Next()
+		err = iter.Next()
+		if err == nil {
+			doc, err = iter.Get()
+		}
 	}
 	if count != 5 {
 		t.Errorf("exptected to iterate 5, saw %d", count)
@@ -166,7 +172,7 @@ func TestForestDBIteratorSeek(t *testing.T) {
 	}
 	defer iter.Close()
 
-	doc, err := iter.Next()
+	doc, err := iter.Get()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,11 +182,11 @@ func TestForestDBIteratorSeek(t *testing.T) {
 	}
 
 	// now seek to e (exists) should skip over d
-	err = iter.Seek([]byte("e"))
+	err = iter.Seek([]byte("e"), FDB_ITR_SEEK_HIGHER)
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err = iter.Next()
+	doc, err = iter.Get()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,11 +196,11 @@ func TestForestDBIteratorSeek(t *testing.T) {
 	}
 
 	// now seek to h (does not exist) should be on i
-	err = iter.Seek([]byte("h"))
+	err = iter.Seek([]byte("h"), FDB_ITR_SEEK_HIGHER)
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err = iter.Next()
+	doc, err = iter.Get()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -238,16 +244,20 @@ func TestForestDBIteratorPrev(t *testing.T) {
 	}
 	defer iter.Close()
 
-	err = iter.Seek([]byte("e"))
+	err = iter.Seek([]byte("e"), FDB_ITR_SEEK_HIGHER)
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err := iter.Next()
+	doc, err := iter.Get()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	doc, err = iter.Prev()
+	err = iter.Prev()
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err = iter.Get()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -17,13 +17,11 @@ import (
 )
 
 // ForestDB iterator options
-type IteratorOpt uint8
+type IteratorOpt uint16
 
 const (
 	// Return both key and value through iterator
 	ITR_NONE IteratorOpt = 0x00
-	// Return key and its metadata only through iterator
-	ITR_META_ONLY IteratorOpt = 0x01
 	// Return only non-deleted items through iterator
 	ITR_NO_DELETES IteratorOpt = 0x02
 	// The lowest key specified will not be returned by the iterator

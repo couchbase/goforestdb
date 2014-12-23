@@ -66,7 +66,7 @@ func (i *Iterator) Next() error {
 // Get gets the current item (key, metadata, doc body) from the iterator
 func (i *Iterator) Get() (*Doc, error) {
 	rv := Doc{}
-	errNo := C.fdb_iterator_get_metaonly(i.iter, &rv.doc)
+	errNo := C.fdb_iterator_get(i.iter, &rv.doc)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}

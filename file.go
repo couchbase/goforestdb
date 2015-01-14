@@ -96,7 +96,7 @@ func (f *File) Commit(opt CommitOpt) error {
 func (f *File) Compact(newfilename string) error {
 
 	fn := C.CString(newfilename)
-	defer C.free(unsafe.Pointer(f))
+	defer C.free(unsafe.Pointer(fn))
 
 	errNo := C.fdb_compact(f.dbfile, fn)
 	if errNo != RESULT_SUCCESS {

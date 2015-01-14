@@ -58,6 +58,10 @@ func (i *KVStoreInfo) LastSeqNum() SeqNum {
 	return SeqNum(i.info.last_seqnum)
 }
 
+func (i *KVStoreInfo) DocCount() uint64 {
+	return uint64(i.info.doc_count)
+}
+
 func (i *KVStoreInfo) String() string {
 	return fmt.Sprintf("name: %s last_seqnum: %d", i.Name(), i.LastSeqNum())
 }

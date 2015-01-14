@@ -9,6 +9,7 @@
 package forestdb
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -149,5 +150,47 @@ func TestForestDBCrud(t *testing.T) {
 	}
 	if kvInfo.LastSeqNum() != 5 {
 		t.Errorf("expected last_seqnum to be 0, got %d", kvInfo.LastSeqNum())
+	}
+}
+
+func TestForestDBCompact(t *testing.T) {
+	defer os.RemoveAll("test")
+	defer os.RemoveAll("test-compacted")
+
+	dbfile, err := Open("test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
+
+	for i := 0; i < 1000; i++ {
+		doc, err := NewDoc([]byte(fmt.Sprintf("key-%d", i)), nil, []byte("value1"))
+		if err != nil {
+			t.Error(err)
+		}
+		err = kvstore.Set(doc)
+		if err != nil {
+			t.Error(err)
+		}
+		doc.Close()
+	}
+
+	err = dbfile.Compact("test-compacted")
+	if err != nil {
+		t.Error(err)
+	}
+
+	for i := 0; i < 1000; i++ {
+		doc, _ := NewDoc([]byte(fmt.Sprintf("key-%d", i)), nil, nil)
+		err = kvstore.Get(doc)
+		if err != nil {
+			t.Error(err)
+		}
 	}
 }

@@ -194,3 +194,71 @@ func TestForestDBCompact(t *testing.T) {
 		}
 	}
 }
+
+func TestForestDBCompactUpto(t *testing.T) {
+	defer os.RemoveAll("test")
+	defer os.RemoveAll("test-compacted")
+
+	dbfile, err := Open("test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
+
+	for i := 0; i < 10; i++ {
+		doc, err := NewDoc([]byte(fmt.Sprintf("key-%d", i)), nil, []byte("value1"))
+		if err != nil {
+			t.Error(err)
+		}
+		err = kvstore.Set(doc)
+		if err != nil {
+			t.Error(err)
+		}
+
+		// commit changes
+		err = dbfile.Commit(COMMIT_NORMAL)
+		if err != nil {
+			t.Error(err)
+		}
+
+		doc.Close()
+	}
+
+	snap, err := dbfile.GetAllSnapMarkers()
+	if err != nil {
+		t.Error(err)
+	}
+	defer snap.FreeSnapMarkers()
+
+	if len(snap.snapInfo) != 10 {
+		t.Errorf("expected num markers 10, got %v", len(snap.snapInfo))
+	}
+
+	//use last but two snap-marker
+	s := snap.snapInfo[2]
+	snapMarker := s.GetSnapMarker()
+	err = dbfile.CompactUpto("test-compacted", snapMarker)
+	if err != nil {
+		t.Error(err)
+	}
+
+	snap, err = dbfile.GetAllSnapMarkers()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(snap.snapInfo) != 3 {
+		t.Errorf("expected num markers 3, got %v", len(snap.snapInfo))
+	}
+
+	cm := snap.snapInfo[0].GetKvsCommitMarkers()
+	if cm[0].GetSeqNum() != 10 {
+		t.Errorf("expected commit marker seqnum 10, got %v", cm[0].GetSeqNum())
+	}
+}

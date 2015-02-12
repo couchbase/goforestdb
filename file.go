@@ -105,6 +105,20 @@ func (f *File) Compact(newfilename string) error {
 	return nil
 }
 
+// CompactUpto compacts the current database file upto given snapshot marker
+//and creates a new compacted file
+func (f *File) CompactUpto(newfilename string, sm *SnapMarker) error {
+
+	fn := C.CString(newfilename)
+	defer C.free(unsafe.Pointer(fn))
+
+	errNo := C.fdb_compact_upto(f.dbfile, fn, sm.marker)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
 // EstimateSpaceUsed returns the overall disk space actively used by the current database file
 func (f *File) EstimateSpaceUsed() int {
 	return int(C.fdb_estimate_space_used(f.dbfile))

@@ -181,7 +181,9 @@ func (c *Config) SetCompactorSleepDuration(s uint64) {
 
 // DefaultConfig gets the default ForestDB config
 func DefaultConfig() *Config {
+	Log.Debugf("fdb_get_default_config call")
 	config := C.fdb_get_default_config()
+	Log.Debugf("fdb_get_default_config ret config:%v", config)
 	return &Config{
 		config: &config,
 	}
@@ -206,7 +208,9 @@ func (c *KVStoreConfig) SetCustomCompare(comparator unsafe.Pointer) {
 
 // DefaultConfig gets the default ForestDB config
 func DefaultKVStoreConfig() *KVStoreConfig {
+	Log.Debugf("fdb_get_default_kvs_config call")
 	config := C.fdb_get_default_kvs_config()
+	Log.Debugf("fdb_get_default_kvs_config ret config:%v", config)
 	return &KVStoreConfig{
 		config: &config,
 	}

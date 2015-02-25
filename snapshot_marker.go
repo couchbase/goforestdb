@@ -30,7 +30,9 @@ func (f *File) GetAllSnapMarkers() (*SnapInfos, error) {
 	snapInfos := &SnapInfos{}
 	var numMarkers C.uint64_t
 
+	Log.Tracef("get_all_snap_markers call f:%p db:%v", f, f.dbfile)
 	errNo := C.fdb_get_all_snap_markers(f.dbfile, &snapInfos.cinfo, &numMarkers)
+	Log.Tracef("get_all_snap_markers retn f:%p errNo:%v cinfo:%v num:%v", f, errNo, snapInfos.cinfo, numMarkers)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -51,8 +53,9 @@ func (s *SnapInfos) SnapInfoList() []SnapInfo {
 }
 
 func (s *SnapInfos) FreeSnapMarkers() error {
-
+	Log.Tracef("free_snap_markers call s:%p cinfo:%v", s, s.cinfo)
 	errNo := C.fdb_free_snap_markers(s.cinfo, C.uint64_t(len(s.snapInfo)))
+	Log.Tracef("free_snap_markers retn s:%p errNo:%v", s, errNo)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}

@@ -47,7 +47,9 @@ type Iterator struct {
 
 // Prev advances the iterator backwards
 func (i *Iterator) Prev() error {
+	Log.Tracef("fdb_iterator_prev call i:%p iter:%v", i, i.iter)
 	errNo := C.fdb_iterator_prev(i.iter)
+	Log.Tracef("fdb_iterator_prev retn i:%p iter:%v", i, errNo, i.iter)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -56,7 +58,9 @@ func (i *Iterator) Prev() error {
 
 // Next advances the iterator forward
 func (i *Iterator) Next() error {
+	Log.Tracef("fdb_iterator_next call i:%p iter:%v", i, i.iter)
 	errNo := C.fdb_iterator_next(i.iter)
+	Log.Tracef("fdb_iterator_next retn i:%p iter:%v", i, errNo, i.iter)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -66,7 +70,9 @@ func (i *Iterator) Next() error {
 // Get gets the current item (key, metadata, doc body) from the iterator
 func (i *Iterator) Get() (*Doc, error) {
 	rv := Doc{}
+	Log.Tracef("fdb_iterator_get call i:%p iter:%v", i, i.iter)
 	errNo := C.fdb_iterator_get(i.iter, &rv.doc)
+	Log.Tracef("fdb_iterator_get retn i:%p iter:%v doc:%v", i, errNo, i.iter, rv.doc)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -76,7 +82,9 @@ func (i *Iterator) Get() (*Doc, error) {
 // GetMetaOnly gets the current item (key, metadata, offset to doc body) from the iterator
 func (i *Iterator) GetMetaOnly() (*Doc, error) {
 	rv := Doc{}
+	Log.Tracef("fdb_iterator_get_metaonly call i:%p iter:%v", i, i.iter)
 	errNo := C.fdb_iterator_get_metaonly(i.iter, &rv.doc)
+	Log.Tracef("fdb_iterator_get_metaonly retn i:%p iter:%v doc:%v", i, errNo, i.iter, rv.doc)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -94,7 +102,9 @@ func (i *Iterator) Seek(seekKey []byte, dir SeekOpt) error {
 	if lensk != 0 {
 		sk = unsafe.Pointer(&seekKey[0])
 	}
+	Log.Tracef("fdb_iterator_seek call i:%p iter:%v sk:%v dir:%v", i, i.iter, sk, dir)
 	errNo := C.fdb_iterator_seek(i.iter, sk, C.size_t(lensk), C.fdb_iterator_seek_opt_t(dir))
+	Log.Tracef("fdb_iterator_seek retn i:%p errNo:%v iter:%v", i, errNo, i.iter)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -104,7 +114,9 @@ func (i *Iterator) Seek(seekKey []byte, dir SeekOpt) error {
 // SeekMin moves iterator to the smallest key
 // of the iteration
 func (i *Iterator) SeekMin() error {
+	Log.Tracef("fdb_iterator_seek_to_min call i:%p iter:%v", i, i.iter)
 	errNo := C.fdb_iterator_seek_to_min(i.iter)
+	Log.Tracef("fdb_iterator_seek_to_min retn i:%p errNo:%v iter:%v", i, errNo, i.iter)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -114,7 +126,9 @@ func (i *Iterator) SeekMin() error {
 // SeekMax moves iterator to the largest key
 // of the iteration
 func (i *Iterator) SeekMax() error {
+	Log.Tracef("fdb_iterator_seek_to_max call i:%p iter:%v", i, i.iter)
 	errNo := C.fdb_iterator_seek_to_max(i.iter)
+	Log.Tracef("fdb_iterator_seek_to_max retn i:%p errNo:%v iter:%v", i, errNo, i.iter)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -123,7 +137,9 @@ func (i *Iterator) SeekMax() error {
 
 // Close the iterator and free its associated resources
 func (i *Iterator) Close() error {
+	Log.Tracef("fdb_iterator_close call i:%p iter:%v", i, i.iter)
 	errNo := C.fdb_iterator_close(i.iter)
+	Log.Tracef("fdb_iterator_close retn i:%p errNo:%v iter:%v", i, errNo, i.iter)
 	if errNo != RESULT_SUCCESS {
 		return Error(errNo)
 	}
@@ -146,7 +162,9 @@ func (k *KVStore) IteratorInit(startKey, endKey []byte, opt IteratorOpt) (*Itera
 	}
 
 	rv := Iterator{}
+	Log.Tracef("fdb_iterator_init call k:%p db:%v sk:%v ek:%v opt:%v", k, k.db, sk, ek, opt)
 	errNo := C.fdb_iterator_init(k.db, &rv.iter, sk, C.size_t(lensk), ek, C.size_t(lenek), C.fdb_iterator_opt_t(opt))
+	Log.Tracef("fdb_iterator_init retn k:%p rv:%v", k, rv.iter)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}
@@ -156,7 +174,9 @@ func (k *KVStore) IteratorInit(startKey, endKey []byte, opt IteratorOpt) (*Itera
 // IteratorSequenceInit create an iterator to traverse a ForestDB snapshot by sequence number range
 func (k *KVStore) IteratorSequenceInit(startSeq, endSeq SeqNum, opt IteratorOpt) (*Iterator, error) {
 	rv := Iterator{}
+	Log.Tracef("fdb_iterator_sequence_init call k:%p db:%v sseq:%v eseq:%v opt:%v", k, k.db, startSeq, endSeq, opt)
 	errNo := C.fdb_iterator_sequence_init(k.db, &rv.iter, C.fdb_seqnum_t(startSeq), C.fdb_seqnum_t(endSeq), C.fdb_iterator_opt_t(opt))
+	Log.Tracef("fdb_iterator_sequence_init retn k:%p rv:%v", k, rv.iter)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}

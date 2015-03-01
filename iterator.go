@@ -79,6 +79,18 @@ func (i *Iterator) Get() (*Doc, error) {
 	return &rv, nil
 }
 
+// GetPreAlloc gets the current item (key, metadata, doc body) from the iterator
+// but uses the pre-allocated memory for the Doc
+func (i *Iterator) GetPreAlloc(rv *Doc) error {
+	Log.Tracef("fdb_iterator_get call i:%p iter:%v", i, i.iter)
+	errNo := C.fdb_iterator_get(i.iter, &rv.doc)
+	Log.Tracef("fdb_iterator_get retn i:%p iter:%v doc:%v", i, errNo, i.iter, rv.doc)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
 // GetMetaOnly gets the current item (key, metadata, offset to doc body) from the iterator
 func (i *Iterator) GetMetaOnly() (*Doc, error) {
 	rv := Doc{}

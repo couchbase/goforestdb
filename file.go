@@ -15,12 +15,14 @@ package forestdb
 import "C"
 
 import (
+	"sync"
 	"unsafe"
 )
 
 // Database handle
 type File struct {
 	dbfile *C.fdb_file_handle
+	sync.Mutex
 }
 
 // Open opens the database with a given file name
@@ -55,6 +57,9 @@ const (
 
 // Commit all pending changes into disk.
 func (f *File) Commit(opt CommitOpt) error {
+	f.Lock()
+	defer f.Unlock()
+
 	Log.Tracef("fdb_commit call f:%p dbfile:%v opt:%v", f, f.dbfile, opt)
 	errNo := C.fdb_commit(f.dbfile, C.fdb_commit_opt_t(opt))
 	Log.Tracef("fdb_commit retn f:%p errNo:%v", f, errNo)
@@ -66,6 +71,8 @@ func (f *File) Commit(opt CommitOpt) error {
 
 // Compact the current database file and create a new compacted file
 func (f *File) Compact(newfilename string) error {
+	f.Lock()
+	defer f.Unlock()
 
 	fn := C.CString(newfilename)
 	defer C.free(unsafe.Pointer(fn))
@@ -82,6 +89,8 @@ func (f *File) Compact(newfilename string) error {
 // CompactUpto compacts the current database file upto given snapshot marker
 //and creates a new compacted file
 func (f *File) CompactUpto(newfilename string, sm *SnapMarker) error {
+	f.Lock()
+	defer f.Unlock()
 
 	fn := C.CString(newfilename)
 	defer C.free(unsafe.Pointer(fn))
@@ -97,6 +106,9 @@ func (f *File) CompactUpto(newfilename string, sm *SnapMarker) error {
 
 // EstimateSpaceUsed returns the overall disk space actively used by the current database file
 func (f *File) EstimateSpaceUsed() int {
+	f.Lock()
+	defer f.Unlock()
+
 	Log.Tracef("fdb_estimate_space_used call f:%p dbfile:%v", f, f.dbfile)
 	rv := int(C.fdb_estimate_space_used(f.dbfile))
 	Log.Tracef("fdb_estimate_space_used retn f:%p rv:%v", f, rv)
@@ -105,6 +117,9 @@ func (f *File) EstimateSpaceUsed() int {
 
 // DbInfo returns the information about a given database handle
 func (f *File) Info() (*FileInfo, error) {
+	f.Lock()
+	defer f.Unlock()
+
 	rv := FileInfo{}
 	Log.Tracef("fdb_get_file_info call f:%p dbfile:%v", f, f.dbfile)
 	errNo := C.fdb_get_file_info(f.dbfile, &rv.info)
@@ -119,6 +134,9 @@ func (f *File) Info() (*FileInfo, error) {
 
 // Close the database file
 func (f *File) Close() error {
+	f.Lock()
+	defer f.Unlock()
+
 	Log.Tracef("fdb_close call f:%p dbfile:%v", f, f.dbfile)
 	errNo := C.fdb_close(f.dbfile)
 	Log.Tracef("fdb_close retn f:%p errNo:%v", f, errNo)
@@ -132,6 +150,9 @@ func (f *File) Close() error {
 // using the provided KVStoreConfig.  If config is
 // nil the DefaultKVStoreConfig() will be used.
 func (f *File) OpenKVStore(name string, config *KVStoreConfig) (*KVStore, error) {
+	f.Lock()
+	defer f.Unlock()
+
 	if config == nil {
 		config = DefaultKVStoreConfig()
 	}

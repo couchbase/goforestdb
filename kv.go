@@ -19,6 +19,8 @@ import (
 
 // GetKV simplified API for key/value access to Get()
 func (k *KVStore) GetKV(key []byte) ([]byte, error) {
+	k.Lock()
+	defer k.Unlock()
 
 	var kk unsafe.Pointer
 	if len(key) != 0 {
@@ -43,6 +45,8 @@ func (k *KVStore) GetKV(key []byte) ([]byte, error) {
 
 // SetKV simplified API for key/value access to Set()
 func (k *KVStore) SetKV(key, value []byte) error {
+	k.Lock()
+	defer k.Unlock()
 
 	var kk, v unsafe.Pointer
 
@@ -68,6 +72,8 @@ func (k *KVStore) SetKV(key, value []byte) error {
 
 // DeleteKV simplified API for key/value access to Delete()
 func (k *KVStore) DeleteKV(key []byte) error {
+	k.Lock()
+	defer k.Unlock()
 
 	var kk unsafe.Pointer
 	if len(key) != 0 {

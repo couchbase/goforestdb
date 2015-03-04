@@ -13,15 +13,20 @@ package forestdb
 //#include <stdlib.h>
 //#include <libforestdb/forestdb.h>
 import "C"
+import "sync"
 
 // KVStore handle
 type KVStore struct {
+	sync.Mutex
 	f  *File
 	db *C.fdb_kvs_handle
 }
 
 // Close the KVStore and release related resources.
 func (k *KVStore) Close() error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_kvs_close call k:%p db:%v", k, k.db)
 	errNo := C.fdb_kvs_close(k.db)
 	Log.Tracef("fdb_kvs_close retn k:%p errNo:%v", k, errNo)
@@ -33,6 +38,9 @@ func (k *KVStore) Close() error {
 
 // Info returns the information about a given kvstore
 func (k *KVStore) Info() (*KVStoreInfo, error) {
+	k.Lock()
+	defer k.Unlock()
+
 	rv := KVStoreInfo{}
 	Log.Tracef("fdb_get_kvs_info call k:%p db:%v", k, k.db)
 	errNo := C.fdb_get_kvs_info(k.db, &rv.info)
@@ -45,6 +53,9 @@ func (k *KVStore) Info() (*KVStoreInfo, error) {
 
 // Get retrieves the metadata and doc body for a given key
 func (k *KVStore) Get(doc *Doc) error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_get call k:%p db:%v doc:%v", k, k.db, doc.doc)
 	errNo := C.fdb_get(k.db, doc.doc)
 	Log.Tracef("fdb_get retn k:%p errNo:%v doc:%v", k, errNo, doc.doc)
@@ -56,6 +67,9 @@ func (k *KVStore) Get(doc *Doc) error {
 
 // GetMetaOnly retrieves the metadata for a given key
 func (k *KVStore) GetMetaOnly(doc *Doc) error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_get_metaonly call k:%p db:%v doc:%v", k, k.db, doc.doc)
 	errNo := C.fdb_get_metaonly(k.db, doc.doc)
 	Log.Tracef("fdb_get_metaonly retn k:%p errNo:%v doc:%v", k, errNo, doc.doc)
@@ -67,6 +81,9 @@ func (k *KVStore) GetMetaOnly(doc *Doc) error {
 
 // GetBySeq retrieves the metadata and doc body for a given sequence number
 func (k *KVStore) GetBySeq(doc *Doc) error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_get_byseq call k:%p db:%v doc:%v", k, k.db, doc.doc)
 	errNo := C.fdb_get_byseq(k.db, doc.doc)
 	Log.Tracef("fdb_get_byseq retn k:%p errNo:%v doc:%v", k, errNo, doc.doc)
@@ -78,6 +95,9 @@ func (k *KVStore) GetBySeq(doc *Doc) error {
 
 // GetMetaOnlyBySeq retrieves the metadata for a given sequence number
 func (k *KVStore) GetMetaOnlyBySeq(doc *Doc) error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_get_metaonly_byseq call k:%p db:%v doc:%v", k, k.db, doc.doc)
 	errNo := C.fdb_get_metaonly_byseq(k.db, doc.doc)
 	Log.Tracef("fdb_get_metaonly_byseq retn k:%p errNo:%v doc:%v", k, errNo, doc.doc)
@@ -89,6 +109,9 @@ func (k *KVStore) GetMetaOnlyBySeq(doc *Doc) error {
 
 // GetByOffset retrieves a doc's metadata and body with a given doc offset in the database file
 func (k *KVStore) GetByOffset(doc *Doc) error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_get_byoffset call k:%p db:%v doc:%v", k, k.db, doc.doc)
 	errNo := C.fdb_get_byoffset(k.db, doc.doc)
 	Log.Tracef("fdb_get_byoffset retn k:%p errNo:%v doc:%v", k, errNo, doc.doc)
@@ -100,6 +123,9 @@ func (k *KVStore) GetByOffset(doc *Doc) error {
 
 // Set update the metadata and doc body for a given key
 func (k *KVStore) Set(doc *Doc) error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_set call k:%p db:%v doc:%v", k, k.db, doc.doc)
 	errNo := C.fdb_set(k.db, doc.doc)
 	Log.Tracef("fdb_set retn k:%p errNo:%v doc:%v", k, errNo, doc.doc)
@@ -111,6 +137,9 @@ func (k *KVStore) Set(doc *Doc) error {
 
 // Delete deletes a key, its metadata and value
 func (k *KVStore) Delete(doc *Doc) error {
+	k.Lock()
+	defer k.Unlock()
+
 	Log.Tracef("fdb_del call k:%p db:%v doc:%v", k, k.db, doc.doc)
 	errNo := C.fdb_del(k.db, doc.doc)
 	Log.Tracef("fdb_set retn k:%p errNo:%v doc:%v", k, errNo, doc.doc)

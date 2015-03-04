@@ -27,6 +27,9 @@ type SnapInfos struct {
 }
 
 func (f *File) GetAllSnapMarkers() (*SnapInfos, error) {
+	f.Lock()
+	defer f.Unlock()
+
 	snapInfos := &SnapInfos{}
 	var numMarkers C.uint64_t
 

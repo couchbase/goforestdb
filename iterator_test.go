@@ -56,6 +56,7 @@ func TestForestDBIterator(t *testing.T) {
 			firstKey = doc.Key()
 		}
 		lastKey = doc.Key()
+		doc.Close()
 		err = iter.Next()
 		if err == nil {
 			doc, err = iter.Get()

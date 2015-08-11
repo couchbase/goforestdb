@@ -115,7 +115,16 @@ func (f *File) Info() (*FileInfo, error) {
 	return &rv, nil
 }
 
-// FIXME implement fdb_switch_compaction_mode
+// SwitchCompactionMode changes the compaction mode of a ForestDB file
+// if the mode is changed to COMPACT_AUTO the compaction
+// threshold is set to the threshold passed to this API
+func (f *File) SwitchCompactionMode(mode CompactOpt, threshold int) error {
+	errNo := C.fdb_switch_compaction_mode(f.dbfile, C.fdb_compaction_mode_t(mode), C.size_t(threshold))
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
 
 // Close the database file
 func (f *File) Close() error {

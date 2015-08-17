@@ -179,6 +179,22 @@ func (c *Config) SetCompactorSleepDuration(s uint64) {
 	c.config.compactor_sleep_duration = C.uint64_t(s)
 }
 
+func (c *Config) MaxWriterLockProb() uint8 {
+	return uint8(c.config.max_writer_lock_prob)
+}
+
+func (c *Config) SetMaxWriterLockProb(s uint8) {
+	c.config.max_writer_lock_prob = C.size_t(s)
+}
+
+func (c *Config) MultiKVInstances() bool {
+	return bool(c.config.multi_kv_instances)
+}
+
+func (c *Config) SetMultiKVInstances(multi bool) {
+	c.config.multi_kv_instances = C.bool(multi)
+}
+
 // DefaultConfig gets the default ForestDB config
 func DefaultConfig() *Config {
 	Log.Debugf("fdb_get_default_config call")

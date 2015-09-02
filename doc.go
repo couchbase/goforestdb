@@ -102,7 +102,7 @@ func (d *Doc) SeqNum() SeqNum {
 // SetSeqNum sets the document sequence number
 // NOTE: only to be used when initiating a sequence number lookup
 func (d *Doc) SetSeqNum(sn SeqNum) {
-	d.doc.seqnum = C.fdb_seqnum_t(sn)
+	C.fdb_doc_set_seqnum(d.doc, C.fdb_seqnum_t(sn))
 }
 
 // Offset returns the offset position on disk

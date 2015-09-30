@@ -90,6 +90,20 @@ func (si *SnapInfo) GetKvsCommitMarkers() []CommitMarker {
 	return commitMarker
 }
 
+// CommitMarkerForKvStore returns a *CommitMarker corresponding
+// to the named KV store which matches the provided argument.
+// Returns nil if no CommitMarker with the specified name
+// is a part of this SnapInfo.
+func (si *SnapInfo) CommitMarkerForKvStore(name string) (rv *CommitMarker) {
+	for _, cm := range si.GetKvsCommitMarkers() {
+		if cm.GetKvStoreName() == name {
+			rv = &cm
+			return
+		}
+	}
+	return
+}
+
 type CommitMarker C.fdb_kvs_commit_marker_t
 
 func (c *CommitMarker) GetKvStoreName() string {

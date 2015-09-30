@@ -243,6 +243,7 @@ func TestForestDBCompactUpto(t *testing.T) {
 	//use last but two snap-marker
 	s := snap.snapInfo[2]
 	snapMarker := s.GetSnapMarker()
+	compactSeqNum := s.CommitMarkerForKvStore("").GetSeqNum()
 	err = dbfile.CompactUpto("test-compacted", snapMarker)
 	if err != nil {
 		t.Error(err)
@@ -253,8 +254,12 @@ func TestForestDBCompactUpto(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(snap.snapInfo) != 3 {
-		t.Errorf("expected num markers 3, got %v", len(snap.snapInfo))
+	// check sequence number in last snap marker
+	lastSnap := snap.snapInfo[len(snap.snapInfo)-1]
+	lastSnapDefaultCommitMarker := lastSnap.CommitMarkerForKvStore("")
+	lastSeqNum := lastSnapDefaultCommitMarker.GetSeqNum()
+	if lastSeqNum != compactSeqNum {
+		t.Errorf("expected low seq num after compaction to be %d, got %d", compactSeqNum, lastSeqNum)
 	}
 
 	cm := snap.snapInfo[0].GetKvsCommitMarkers()

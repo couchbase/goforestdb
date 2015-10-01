@@ -20,6 +20,11 @@ type KVStore struct {
 	db *C.fdb_kvs_handle
 }
 
+// File returns the File containing this KVStore
+func (k *KVStore) File() *File {
+	return k.f
+}
+
 // Close the KVStore and release related resources.
 func (k *KVStore) Close() error {
 	Log.Tracef("fdb_kvs_close call k:%p db:%v", k, k.db)

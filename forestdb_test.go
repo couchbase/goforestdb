@@ -9,8 +9,10 @@
 package forestdb
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 )
 
@@ -266,4 +268,65 @@ func TestForestDBCompactUpto(t *testing.T) {
 	if cm[0].GetSeqNum() != 10 {
 		t.Errorf("expected commit marker seqnum 10, got %v", cm[0].GetSeqNum())
 	}
+}
+
+func TestForestDBConcurrent(t *testing.T) {
+	numWriters := 2
+	numReaders := 4
+	numOps := 100000
+	testValue := []byte{0, 0, 0, 0, 0, 0, 0, 0}
+	defer os.RemoveAll("test")
+
+	fdbConfig := DefaultConfig()
+	kvConfig := DefaultKVStoreConfig()
+
+	// create a pool, each worker its own file/kvstore
+	kvpool, err := NewKVPool("test", fdbConfig, "default", kvConfig, numReaders+numWriters)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvpool.Close()
+
+	var wg sync.WaitGroup
+	// start writers
+	for i := 0; i < numWriters; i++ {
+		kvs, err := kvpool.Get()
+		if err != nil {
+			t.Fatal(err)
+		}
+		db := kvs.File()
+		wg.Add(1)
+		go func(base int, db *File, kvs *KVStore) {
+			defer wg.Done()
+			defer kvpool.Return(kvs)
+			for n := 0; n < numOps; n++ {
+				key := make([]byte, 4)
+				binary.BigEndian.PutUint32(key, uint32(base*numOps+n))
+				if err := kvs.SetKV(key, testValue); err != nil {
+					t.Fatalf("writer err: %v", err)
+				}
+			}
+		}(i, db, kvs)
+	}
+	// start readers
+	for i := 0; i < numReaders; i++ {
+		kvs, err := kvpool.Get()
+		if err != nil {
+			t.Fatal(err)
+		}
+		db := kvs.File()
+		wg.Add(1)
+		go func(base int, db *File, kvs *KVStore) {
+			defer wg.Done()
+			defer kvpool.Return(kvs)
+			for n := 0; n < numOps; n++ {
+				key := make([]byte, 4)
+				binary.BigEndian.PutUint32(key, uint32(base*numOps+n))
+				if _, err := kvs.GetKV(key); err != nil && err != RESULT_KEY_NOT_FOUND {
+					t.Fatalf("reader err: %v", err)
+				}
+			}
+		}(i, db, kvs)
+	}
+	wg.Wait()
 }

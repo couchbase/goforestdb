@@ -12,6 +12,12 @@ package forestdb
 //#include <libforestdb/forestdb.h>
 import "C"
 
+// SnapshotInmem is the magic sequence number to request an
+// in-memory snapshot be created.
+// We cannot reference C.FDB_SNAPSHOT_INMEM because
+// Go compiler complains about overflowing int.
+const SnapshotInmem = 1<<64 - 1
+
 // SnapshotOpen creates an snapshot of a database file in ForestDB
 func (k *KVStore) SnapshotOpen(sn SeqNum) (*KVStore, error) {
 	rv := KVStore{}

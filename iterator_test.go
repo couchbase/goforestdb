@@ -10,6 +10,7 @@ package forestdb
 
 import (
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -411,5 +412,78 @@ func TestForestDBIteratorPreAlloc(t *testing.T) {
 	if err != RESULT_ITERATOR_FAIL {
 		t.Errorf("expected %#v, got %#v", RESULT_ITERATOR_FAIL, err)
 	}
+
+}
+
+func TestForestDBIteratorBug(t *testing.T) {
+	defer os.RemoveAll("test")
+
+	dbfile, err := Open("test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dbfile.Close()
+
+	kvstore, err := dbfile.OpenKVStoreDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer kvstore.Close()
+
+	// store a bunch of values to test the iterator
+	kvstore.SetKV([]byte("a1"), []byte("vala"))
+	kvstore.SetKV([]byte("b1"), []byte("valb"))
+	kvstore.SetKV([]byte("c1"), []byte("valc"))
+	kvstore.SetKV([]byte("d1"), []byte("vald"))
+	kvstore.SetKV([]byte("e1"), []byte("vale"))
+
+	err = dbfile.Commit(COMMIT_NORMAL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// open read snapshot
+	snapshot, err := kvstore.SnapshotOpen(SnapshotInmem)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	iter, err := snapshot.IteratorInit([]byte("b1"), []byte("d1"), ITR_NO_DELETES|FDB_ITR_SKIP_MAX_KEY)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err := iter.Get()
+	var firstKey, lastKey []byte
+	for err == nil {
+		if firstKey == nil {
+			firstKey = doc.Key()
+		}
+		lastKey = doc.Key()
+		doc.Close()
+		err = iter.Next()
+		if err == nil {
+			doc, err = iter.Get()
+		}
+	}
+
+	if !reflect.DeepEqual([]byte("b1"), firstKey) {
+		t.Errorf("expected first key 'b1', got %s", firstKey)
+	}
+
+	if !reflect.DeepEqual([]byte("c1"), lastKey) {
+		t.Errorf("expected first key 'c1', got %s", firstKey)
+	}
+
+	firstKey = nil
+	lastKey = nil
+
+	// seek to non-existant key that happens to land on end key that should be excluded
+	err = iter.Seek([]byte("c2"), FDB_ITR_SEEK_HIGHER)
+	if err != RESULT_ITERATOR_FAIL {
+		t.Fatalf("expected seek to c2 to fail, got %v", err)
+	}
+
+	iter.Close()
 
 }

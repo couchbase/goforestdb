@@ -80,7 +80,7 @@ func TestForestDBKVCrud(t *testing.T) {
 		t.Error(err)
 	}
 	if val != nil {
-		t.Error("expected nil value, got %#v", val)
+		t.Errorf("expected nil value, got %#v", val)
 	}
 
 	// delete it again

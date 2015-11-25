@@ -1,5 +1,19 @@
 package forestdb
 
+import "C"
+import "unsafe"
+
+//export LogCallbackInternal
+func LogCallbackInternal(errCode C.int, msg *C.char, ctx *C.char) {
+	context := (*logContext)(unsafe.Pointer(ctx))
+	(*context.callback)(context.name, int(errCode), C.GoString(msg), context.userCtx)
+}
+
+//export FatalErrorCallbackInternal
+func FatalErrorCallbackInternal() {
+	fatalErrorCallback()
+}
+
 // Logger interface
 type Logger interface {
 	// Warnings, logged by default.

@@ -12,12 +12,22 @@ package forestdb
 //#cgo LDFLAGS: -lforestdb
 //#include <stdlib.h>
 //#include <libforestdb/forestdb.h>
+//extern void LogCallbackInternal(int, char*, char*);
+//void log_callback(int errcode, char *msg, void *ctx) {
+//    LogCallbackInternal(errcode, msg, ctx);
+//}
+//extern void FatalErrorCallbackInternal();
+//void fatal_error_callback() {
+//    FatalErrorCallbackInternal();
+//}
 import "C"
+import "unsafe"
 
 // KVStore handle
 type KVStore struct {
-	f  *File
-	db *C.fdb_kvs_handle
+	f    *File
+	db   *C.fdb_kvs_handle
+	name string
 }
 
 // File returns the File containing this KVStore
@@ -134,4 +144,34 @@ func Shutdown() error {
 		return Error(errNo)
 	}
 	return nil
+}
+
+type logContext struct {
+	callback *LogCallback
+	name     string
+	userCtx  interface{}
+}
+
+func (k *KVStore) SetLogCallback(l LogCallback, userCtx interface{}) {
+	ctx := logContext{
+		callback: &l,
+		name:     k.name,
+		userCtx:  userCtx,
+	}
+	C.fdb_set_log_callback(k.db, C.fdb_log_callback(C.log_callback), unsafe.Pointer(&ctx))
+}
+
+func SetFatalErrorCallback(callback FatalErrorCallback) {
+	fatalErrorCallback = callback
+	C.fdb_set_fatal_error_callback(C.fdb_fatal_error_callback(C.fatal_error_callback))
+}
+
+type FatalErrorCallback func()
+
+var fatalErrorCallback FatalErrorCallback
+
+type LogCallback func(name string, errCode int, msg string, ctx interface{})
+
+func LoggingLogCallback(name string, errCode int, msg string, ctx interface{}) {
+	Log.Errorf("ForestDB (%s) Error Code: %d Message: %s", name, errCode, msg)
 }

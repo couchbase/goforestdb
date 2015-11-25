@@ -146,7 +146,8 @@ func (f *File) OpenKVStore(name string, config *KVStoreConfig) (*KVStore, error)
 	}
 
 	rv := KVStore{
-		f: f,
+		f:    f,
+		name: name,
 	}
 	kvsname := C.CString(name)
 	defer C.free(unsafe.Pointer(kvsname))

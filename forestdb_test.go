@@ -330,3 +330,57 @@ func TestForestDBConcurrent(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestForestDBGetKVStoreNames(t *testing.T) {
+	defer os.RemoveAll("test")
+
+	dbfile, err := Open("test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dbfile.Close()
+
+	names, err := dbfile.GetKVStoreNames()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(names) != 1 {
+		t.Fatalf("expected 1 kvstore, got %d", len(names))
+	}
+	if names[0] != "default" {
+		t.Errorf("expected single kvstore name to be 'default', got %s", names[0])
+	}
+
+	// create another kvstore
+	kvstore, err := dbfile.OpenKVStore("couchbase", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = kvstore.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	names, err = dbfile.GetKVStoreNames()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(names) != 2 {
+		t.Fatalf("expected 2 kvstore, got %d", len(names))
+	}
+
+	foundCouchbase := false
+	for _, kvstoreName := range names {
+		if kvstoreName == "couchbase" {
+			foundCouchbase = true
+		}
+	}
+	if !foundCouchbase {
+		t.Errorf("expected to find kvstore named 'couchbase', got %v", names)
+	}
+
+	// FIXME we don't yet support fdb_kvs_remove once we do, test that behavior as well
+
+}

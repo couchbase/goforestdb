@@ -15,6 +15,7 @@ package forestdb
 import "C"
 
 import (
+	"reflect"
 	"unsafe"
 )
 
@@ -165,6 +166,34 @@ func (f *File) OpenKVStore(name string, config *KVStoreConfig) (*KVStore, error)
 // nil the DefaultKVStoreConfig() will be used.
 func (f *File) OpenKVStoreDefault(config *KVStoreConfig) (*KVStore, error) {
 	return f.OpenKVStore("default", config)
+}
+
+func (f *File) GetKVStoreNames() ([]string, error) {
+	var ninfo C.fdb_kvs_name_list
+	errNo := C.fdb_get_kvs_name_list(f.dbfile, &ninfo)
+	if errNo != RESULT_SUCCESS {
+		return nil, Error(errNo)
+	}
+
+	size := int(ninfo.num_kvs_names)
+	hdr := reflect.SliceHeader{
+		Data: uintptr(unsafe.Pointer(ninfo.kvs_names)),
+		Len:  size,
+		Cap:  size,
+	}
+
+	all := *(*[]*C.char)(unsafe.Pointer(&hdr))
+	rv := make([]string, size)
+	for i := 0; i < size; i++ {
+		rv[i] = C.GoString(all[i])
+	}
+
+	C.fdb_free_kvs_name_list(&ninfo)
+	if errNo != RESULT_SUCCESS {
+		return nil, Error(errNo)
+	}
+
+	return rv, nil
 }
 
 // Destroy destroys all resources associated with a ForestDB file permanently

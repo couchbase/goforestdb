@@ -35,6 +35,11 @@ func (k *KVStore) File() *File {
 	return k.f
 }
 
+// Handle returns the underlying fdb_kvs_handle for advanced uses.
+func (k *KVStore) Handle() *C.fdb_kvs_handle {
+	return k.db
+}
+
 // Close the KVStore and release related resources.
 func (k *KVStore) Close() error {
 	Log.Tracef("fdb_kvs_close call k:%p db:%v", k, k.db)

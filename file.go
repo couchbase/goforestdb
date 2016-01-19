@@ -24,6 +24,19 @@ type File struct {
 	dbfile *C.fdb_file_handle
 }
 
+// Init initializes forestdb library
+func Init(config *Config) error {
+	if config == nil {
+		config = DefaultConfig()
+	}
+
+	errNo := C.fdb_init(config.config)
+	if errNo != RESULT_SUCCESS {
+		return Error(errNo)
+	}
+	return nil
+}
+
 // Open opens the database with a given file name
 func Open(filename string, config *Config) (*File, error) {
 

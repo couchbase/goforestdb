@@ -67,14 +67,19 @@ func (b *KVBatch) Reset() {
 }
 
 func (k *KVStore) ExecuteBatch(b *KVBatch, opt CommitOpt) error {
+
 	for _, op := range b.ops {
 		if op.vlen == 0 {
+			Log.Tracef("fdb_del_kv call k:%p db:%p kk:%v", k, k.db, op.k)
 			errNo := C.fdb_del_kv(k.db, op.k, op.klen)
+			Log.Tracef("fdb_del_kv retn k:%p errNo:%v", k, errNo)
 			if errNo != RESULT_SUCCESS {
 				return Error(errNo)
 			}
 		} else {
+			Log.Tracef("fdb_set_kv call k:%p db:%p kk:%v v:%v", k, k.db, op.k, op.v)
 			errNo := C.fdb_set_kv(k.db, op.k, op.klen, op.v, op.vlen)
+			Log.Tracef("fdb_set_kv retn k:%p errNo:%v", k, errNo)
 			if errNo != RESULT_SUCCESS {
 				return Error(errNo)
 			}

@@ -69,7 +69,7 @@ const (
 
 // Commit all pending changes into disk.
 func (f *File) Commit(opt CommitOpt) error {
-	Log.Tracef("fdb_commit call f:%p dbfile:%v opt:%v", f, f.dbfile, opt)
+	Log.Tracef("fdb_commit call f:%p dbfile:%p opt:%v", f, f.dbfile, opt)
 	errNo := C.fdb_commit(f.dbfile, C.fdb_commit_opt_t(opt))
 	Log.Tracef("fdb_commit retn f:%p errNo:%v", f, errNo)
 	if errNo != RESULT_SUCCESS {
@@ -84,7 +84,7 @@ func (f *File) Compact(newfilename string) error {
 	fn := C.CString(newfilename)
 	defer C.free(unsafe.Pointer(fn))
 
-	Log.Tracef("fdb_compact call f:%p dbfile:%v fn:%v", f, f.dbfile, fn)
+	Log.Tracef("fdb_compact call f:%p dbfile:%p fn:%v", f, f.dbfile, fn)
 	errNo := C.fdb_compact(f.dbfile, fn)
 	Log.Tracef("fdb_compact retn f:%p errNo:%v", f, errNo)
 	if errNo != RESULT_SUCCESS {
@@ -100,7 +100,7 @@ func (f *File) CompactUpto(newfilename string, sm *SnapMarker) error {
 	fn := C.CString(newfilename)
 	defer C.free(unsafe.Pointer(fn))
 
-	Log.Tracef("fdb_compact_upto call f:%p dbfile:%v fn:%v marker:%v", f, f.dbfile, fn, sm.marker)
+	Log.Tracef("fdb_compact_upto call f:%p dbfile:%p fn:%v marker:%v", f, f.dbfile, fn, sm.marker)
 	errNo := C.fdb_compact_upto(f.dbfile, fn, sm.marker)
 	Log.Tracef("fdb_compact_upto retn f:%p errNo:%v", f, errNo)
 	if errNo != RESULT_SUCCESS {
@@ -111,7 +111,7 @@ func (f *File) CompactUpto(newfilename string, sm *SnapMarker) error {
 
 // EstimateSpaceUsed returns the overall disk space actively used by the current database file
 func (f *File) EstimateSpaceUsed() int {
-	Log.Tracef("fdb_estimate_space_used call f:%p dbfile:%v", f, f.dbfile)
+	Log.Tracef("fdb_estimate_space_used call f:%p dbfile:%p", f, f.dbfile)
 	rv := int(C.fdb_estimate_space_used(f.dbfile))
 	Log.Tracef("fdb_estimate_space_used retn f:%p rv:%v", f, rv)
 	return rv
@@ -120,7 +120,7 @@ func (f *File) EstimateSpaceUsed() int {
 // DbInfo returns the information about a given database handle
 func (f *File) Info() (*FileInfo, error) {
 	rv := FileInfo{}
-	Log.Tracef("fdb_get_file_info call f:%p dbfile:%v", f, f.dbfile)
+	Log.Tracef("fdb_get_file_info call f:%p dbfile:%p", f, f.dbfile)
 	errNo := C.fdb_get_file_info(f.dbfile, &rv.info)
 	Log.Tracef("fdb_get_file_info retn f:%p errNo:%v, info:%v", f, errNo, rv.info)
 	if errNo != RESULT_SUCCESS {
@@ -142,7 +142,7 @@ func (f *File) SwitchCompactionMode(mode CompactOpt, threshold int) error {
 
 // Close the database file
 func (f *File) Close() error {
-	Log.Tracef("fdb_close call f:%p dbfile:%v", f, f.dbfile)
+	Log.Tracef("fdb_close call f:%p dbfile:%p", f, f.dbfile)
 	errNo := C.fdb_close(f.dbfile)
 	Log.Tracef("fdb_close retn f:%p errNo:%v", f, errNo)
 	if errNo != RESULT_SUCCESS {
@@ -165,9 +165,9 @@ func (f *File) OpenKVStore(name string, config *KVStoreConfig) (*KVStore, error)
 	}
 	kvsname := C.CString(name)
 	defer C.free(unsafe.Pointer(kvsname))
-	Log.Tracef("fdb_kvs_open call f:%p dbfile:%v kvsname:%v config:%v", f, f.dbfile, kvsname, config.config)
+	Log.Tracef("fdb_kvs_open call f:%p dbfile:%p kvsname:%v config:%v", f, f.dbfile, kvsname, config.config)
 	errNo := C.fdb_kvs_open(f.dbfile, &rv.db, kvsname, config.config)
-	Log.Tracef("fdb_kvs_open retn f:%p errNo:%v db:%v", f, errNo, rv.db)
+	Log.Tracef("fdb_kvs_open retn f:%p errNo:%v db:%p rv:%p", f, errNo, rv.db, &rv)
 	if errNo != RESULT_SUCCESS {
 		return nil, Error(errNo)
 	}

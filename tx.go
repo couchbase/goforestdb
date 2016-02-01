@@ -23,7 +23,7 @@ const (
 )
 
 func (f *File) BeginTransaction(level IsolationLevel) error {
-	Log.Tracef("fdb_begin_transaction call f:%p dbfile:%v level:%v", f, f.dbfile, level)
+	Log.Tracef("fdb_begin_transaction call f:%p dbfile:%p level:%v", f, f.dbfile, level)
 	errNo := C.fdb_begin_transaction(f.dbfile, C.fdb_isolation_level_t(level))
 	Log.Tracef("fdb_begin_transaction retn f:%p errNo:%v", f, errNo)
 	if errNo != RESULT_SUCCESS {
@@ -33,7 +33,7 @@ func (f *File) BeginTransaction(level IsolationLevel) error {
 }
 
 func (f *File) EndTransaction(opt CommitOpt) error {
-	Log.Tracef("fdb_end_transaction call f:%p dbfile:%v opt:%v", f, f.dbfile, opt)
+	Log.Tracef("fdb_end_transaction call f:%p dbfile:%p opt:%v", f, f.dbfile, opt)
 	errNo := C.fdb_end_transaction(f.dbfile, C.fdb_commit_opt_t(opt))
 	Log.Tracef("fdb_end_transaction retn f:%p errNo:%v", f, errNo)
 	if errNo != RESULT_SUCCESS {
@@ -43,7 +43,7 @@ func (f *File) EndTransaction(opt CommitOpt) error {
 }
 
 func (f *File) AbortTransaction() error {
-	Log.Tracef("fdb_abort_transaction call f:%p dbfile:%v", f, f.dbfile)
+	Log.Tracef("fdb_abort_transaction call f:%p dbfile:%p", f, f.dbfile)
 	errNo := C.fdb_abort_transaction(f.dbfile)
 	Log.Tracef("fdb_abort_transaction retn f:%p errNo:%v", f, errNo)
 	if errNo != RESULT_SUCCESS {

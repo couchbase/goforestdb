@@ -66,7 +66,25 @@ func (b *KVBatch) Reset() {
 	b.ops = b.ops[:0]
 }
 
-func (k *KVStore) ExecuteBatch(b *KVBatch, opt CommitOpt) error {
+func (k *KVStore) ExecuteBatch(b *KVBatch, opt CommitOpt) (err error) {
+
+	err = k.File().BeginTransaction(ISOLATION_READ_COMMITTED)
+	if err != nil {
+		return
+	}
+	// defer function to ensure that once started,
+	// we either commit transaction or abort it
+	defer func() {
+		// if nothing went wrong, commit
+		if err == nil {
+			// careful to catch error here too
+			err = k.File().EndTransaction(opt)
+		} else {
+			// caller should see error that caused abort,
+			// not success or failure of abort itself
+			_ = k.File().AbortTransaction()
+		}
+	}()
 
 	for _, op := range b.ops {
 		if op.vlen == 0 {
@@ -74,16 +92,18 @@ func (k *KVStore) ExecuteBatch(b *KVBatch, opt CommitOpt) error {
 			errNo := C.fdb_del_kv(k.db, op.k, op.klen)
 			Log.Tracef("fdb_del_kv retn k:%p errNo:%v", k, errNo)
 			if errNo != RESULT_SUCCESS {
-				return Error(errNo)
+				err = Error(errNo)
+				return
 			}
 		} else {
 			Log.Tracef("fdb_set_kv call k:%p db:%p kk:%v v:%v", k, k.db, op.k, op.v)
 			errNo := C.fdb_set_kv(k.db, op.k, op.klen, op.v, op.vlen)
 			Log.Tracef("fdb_set_kv retn k:%p errNo:%v", k, errNo)
 			if errNo != RESULT_SUCCESS {
-				return Error(errNo)
+				err = Error(errNo)
+				return
 			}
 		}
 	}
-	return k.File().Commit(opt)
+	return
 }

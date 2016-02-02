@@ -63,6 +63,18 @@ func (k *KVStore) Info() (*KVStoreInfo, error) {
 	return &rv, nil
 }
 
+// OpsInfo returns the information about the ops on given kvstore
+func (k *KVStore) OpsInfo() (*KVSOpsInfo, error) {
+	rv := KVSOpsInfo{}
+	Log.Tracef("fdb_get_kvs_ops_info call k:%p db:%p", k, k.db)
+	errNo := C.fdb_get_kvs_ops_info(k.db, &rv.info)
+	Log.Tracef("fdb_get_kvs_ops_info k:%p errNo:%v info:%v", k, errNo, rv.info)
+	if errNo != RESULT_SUCCESS {
+		return nil, Error(errNo)
+	}
+	return &rv, nil
+}
+
 // Get retrieves the metadata and doc body for a given key
 func (k *KVStore) Get(doc *Doc) error {
 	Log.Tracef("fdb_get call k:%p db:%p doc:%v", k, k.db, doc.doc)

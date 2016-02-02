@@ -65,3 +65,35 @@ func (i *KVStoreInfo) DocCount() uint64 {
 func (i *KVStoreInfo) String() string {
 	return fmt.Sprintf("name: %s last_seqnum: %d", i.Name(), i.LastSeqNum())
 }
+
+type KVSOpsInfo struct {
+	info C.fdb_kvs_ops_info
+}
+
+func (i *KVSOpsInfo) NumSets() uint64 {
+	return uint64(i.info.num_sets)
+}
+
+func (i *KVSOpsInfo) NumDels() uint64 {
+	return uint64(i.info.num_dels)
+}
+
+func (i *KVSOpsInfo) NumCommits() uint64 {
+	return uint64(i.info.num_commits)
+}
+
+func (i *KVSOpsInfo) NumCompacts() uint64 {
+	return uint64(i.info.num_compacts)
+}
+
+func (i *KVSOpsInfo) NumGets() uint64 {
+	return uint64(i.info.num_gets)
+}
+
+func (i *KVSOpsInfo) NumIteratorGets() uint64 {
+	return uint64(i.info.num_iterator_gets)
+}
+
+func (i *KVSOpsInfo) NumIteratorMoves() uint64 {
+	return uint64(i.info.num_iterator_moves)
+}

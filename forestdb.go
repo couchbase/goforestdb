@@ -17,10 +17,11 @@ package forestdb
 //    LogCallbackInternal(errcode, msg, ctx);
 //}
 //extern void FatalErrorCallbackInternal();
-//void fatal_error_callback() {
+//void gofatal_error_callback() {
 //    FatalErrorCallbackInternal();
 //}
 import "C"
+
 import "unsafe"
 
 // KVStore handle
@@ -180,7 +181,7 @@ func (k *KVStore) SetLogCallback(l LogCallback, userCtx interface{}) {
 
 func SetFatalErrorCallback(callback FatalErrorCallback) {
 	fatalErrorCallback = callback
-	C.fdb_set_fatal_error_callback(C.fdb_fatal_error_callback(C.fatal_error_callback))
+	C.fdb_set_fatal_error_callback(C.fdb_fatal_error_callback(C.gofatal_error_callback))
 }
 
 type FatalErrorCallback func()

@@ -1,7 +1,10 @@
 package forestdb
 
 import "C"
-import "unsafe"
+import (
+	"log"
+	"unsafe"
+)
 
 //export LogCallbackInternal
 func LogCallbackInternal(errCode C.int, msg *C.char, ctx *C.char) {
@@ -49,6 +52,61 @@ func (*Dummy) Debugf(_ string, _ ...interface{}) {
 }
 
 func (*Dummy) Tracef(_ string, _ ...interface{}) {
+}
+
+type LogLevel int
+
+const (
+	LogFatal LogLevel = iota
+	LogError
+	LogWarn
+	LogInfo
+	LogDebug
+	LogTrace
+)
+
+type LeveledLog struct {
+	level LogLevel
+}
+
+func NewLeveledLog(level LogLevel) *LeveledLog {
+	return &LeveledLog{level: level}
+}
+
+func (l *LeveledLog) Fatalf(format string, a ...interface{}) {
+	if l.level >= LogFatal {
+		log.Fatalf(format, a...)
+	}
+}
+
+func (l *LeveledLog) Errorf(format string, a ...interface{}) {
+	if l.level >= LogError {
+		log.Printf(format, a...)
+	}
+}
+
+func (l *LeveledLog) Warnf(format string, a ...interface{}) {
+	if l.level >= LogWarn {
+		log.Printf(format, a...)
+	}
+}
+
+func (l *LeveledLog) Infof(format string, a ...interface{}) {
+	if l.level >= LogInfo {
+		log.Printf(format, a...)
+	}
+}
+
+func (l *LeveledLog) Debugf(format string, a ...interface{}) {
+	if l.level >= LogDebug {
+		log.Printf(format, a...)
+	}
+}
+
+func (l *LeveledLog) Tracef(format string, a ...interface{}) {
+	if l.level >= LogTrace {
+		log.Printf(format, a...)
+	}
 }
 
 // Logger to use

@@ -16,6 +16,7 @@ import "C"
 import "unsafe"
 
 type batchOp struct {
+	del  bool
 	k    unsafe.Pointer
 	klen C.size_t
 	v    unsafe.Pointer
@@ -43,6 +44,7 @@ func (b *KVBatch) Set(k, v []byte) {
 		C.memmove(vc, unsafe.Pointer(&v[0]), vlen)
 	}
 	b.ops = append(b.ops, &batchOp{
+		del:  false,
 		k:    unsafe.Pointer(kc),
 		klen: klen,
 		v:    unsafe.Pointer(vc),
@@ -51,7 +53,14 @@ func (b *KVBatch) Set(k, v []byte) {
 }
 
 func (b *KVBatch) Delete(k []byte) {
-	b.Set(k, nil)
+	klen := C.size_t(len(k))
+	kc := C.malloc(klen)
+	C.memmove(kc, unsafe.Pointer(&k[0]), klen)
+	b.ops = append(b.ops, &batchOp{
+		del:  true,
+		k:    unsafe.Pointer(kc),
+		klen: klen,
+	})
 }
 
 func (b *KVBatch) Reset() {
@@ -87,7 +96,7 @@ func (k *KVStore) ExecuteBatch(b *KVBatch, opt CommitOpt) (err error) {
 	}()
 
 	for _, op := range b.ops {
-		if op.vlen == 0 {
+		if op.del {
 			Log.Tracef("fdb_del_kv call k:%p db:%p kk:%v", k, k.db, op.k)
 			errNo := C.fdb_del_kv(k.db, op.k, op.klen)
 			Log.Tracef("fdb_del_kv retn k:%p errNo:%v", k, errNo)

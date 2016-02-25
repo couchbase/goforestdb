@@ -113,4 +113,22 @@ func TestForestDBKVBatch(t *testing.T) {
 		t.Errorf("expected e-val, got %s", val)
 	}
 
+	// reset the batch and reuse it
+	batch.Reset()
+	// set e to value of length 0
+	batch.Set([]byte("e"), []byte{})
+
+	err = kvstore.ExecuteBatch(batch, COMMIT_NORMAL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	val, err = kvstore.GetKV([]byte("e"))
+	if err != nil {
+		t.Error(err)
+	}
+	if string(val) != "" {
+		t.Errorf("expected e-val, got %s", val)
+	}
+
 }

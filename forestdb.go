@@ -11,6 +11,7 @@ package forestdb
 
 //#include <stdlib.h>
 //#include <libforestdb/forestdb.h>
+//#include "log.h"
 //extern void LogCallbackInternal(int, char*, char*);
 //void log_callback(int errcode, char *msg, void *ctx) {
 //    LogCallbackInternal(errcode, msg, ctx);
@@ -169,12 +170,20 @@ type logContext struct {
 	userCtx  interface{}
 }
 
+// Hold references to log callbacks and contexts.
+var logCallbacks []LogCallback
+var logContexts []interface{}
+
+func registerLogCallback(cb LogCallback, ctx interface{}) int {
+	logCallbacks = append(logCallbacks, cb)
+	logContexts = append(logContexts, ctx)
+	return len(logCallbacks) - 1
+}
+
 func (k *KVStore) SetLogCallback(l LogCallback, userCtx interface{}) {
-	ctx := logContext{
-		callback: &l,
-		name:     k.name,
-		userCtx:  userCtx,
-	}
+	var ctx C.log_context
+	ctx.offset = C.int(registerLogCallback(l, userCtx))
+	ctx.name = C.CString(k.name)
 	C.fdb_set_log_callback(k.db, C.fdb_log_callback(C.log_callback), unsafe.Pointer(&ctx))
 }
 

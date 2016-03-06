@@ -57,8 +57,15 @@ func TestLogCallback(t *testing.T) {
 		if errCode != -10 {
 			t.Errorf("expected error code -10, got %d", errCode)
 		}
+		if ctx, ok := ctx.(map[string]interface{}); ok {
+			if ctx["customKey"] != "customVal" {
+				t.Errorf("expected to see my custom context")
+			}
+		} else {
+			t.Errorf("expected custom context to be the type i passed in")
+		}
 		// don't check the message as it could change
-	}, nil)
+	}, map[string]interface{}{"customKey": "customVal"})
 	err = kvstore.SetKV([]byte("key"), []byte("value"))
 	if err == nil {
 		t.Fatalf("expected error, got nil")

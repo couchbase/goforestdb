@@ -1,5 +1,6 @@
 package forestdb
 
+//#include "log.h"
 import "C"
 import (
 	"log"
@@ -8,8 +9,10 @@ import (
 
 //export LogCallbackInternal
 func LogCallbackInternal(errCode C.int, msg *C.char, ctx *C.char) {
-	context := (*logContext)(unsafe.Pointer(ctx))
-	(*context.callback)(context.name, int(errCode), C.GoString(msg), context.userCtx)
+	context := (*C.log_context)(unsafe.Pointer(ctx))
+	cb := logCallbacks[context.offset]
+	userCtx := logContexts[context.offset]
+	cb(C.GoString(context.name), int(errCode), C.GoString(msg), userCtx)
 }
 
 //export FatalErrorCallbackInternal

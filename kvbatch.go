@@ -10,10 +10,12 @@ package forestdb
 //  and limitations under the License.
 
 //#include <stdlib.h>
-//#include <string.h>
 //#include <libforestdb/forestdb.h>
 import "C"
-import "unsafe"
+import (
+	"reflect"
+	"unsafe"
+)
 
 type batchOp struct {
 	del  bool
@@ -33,34 +35,31 @@ func NewKVBatch() *KVBatch {
 	}
 }
 
+func copySliceToC(in []byte) (C.size_t, unsafe.Pointer) {
+	outl := C.size_t(len(in))
+	outv := C.malloc(outl)
+	var tmpSlice []byte
+	shdr := (*reflect.SliceHeader)(unsafe.Pointer(&tmpSlice))
+	shdr.Data = uintptr(outv)
+	shdr.Len = int(outl)
+	shdr.Cap = shdr.Len
+	copy(tmpSlice, in)
+	return outl, outv
+}
+
 func (b *KVBatch) Set(k, v []byte) {
-	klen := C.size_t(len(k))
-	kc := C.malloc(klen)
-	C.memmove(kc, unsafe.Pointer(&k[0]), klen)
-	vlen := C.size_t(len(v))
-	var vc unsafe.Pointer
-	if vlen > 0 {
-		vc = C.malloc(vlen)
-		C.memmove(vc, unsafe.Pointer(&v[0]), vlen)
+	bo := batchOp{del: false}
+	bo.klen, bo.k = copySliceToC(k)
+	if len(v) > 0 {
+		bo.vlen, bo.v = copySliceToC(v)
 	}
-	b.ops = append(b.ops, &batchOp{
-		del:  false,
-		k:    unsafe.Pointer(kc),
-		klen: klen,
-		v:    unsafe.Pointer(vc),
-		vlen: vlen,
-	})
+	b.ops = append(b.ops, &bo)
 }
 
 func (b *KVBatch) Delete(k []byte) {
-	klen := C.size_t(len(k))
-	kc := C.malloc(klen)
-	C.memmove(kc, unsafe.Pointer(&k[0]), klen)
-	b.ops = append(b.ops, &batchOp{
-		del:  true,
-		k:    unsafe.Pointer(kc),
-		klen: klen,
-	})
+	bo := batchOp{del: true}
+	bo.klen, bo.k = copySliceToC(k)
+	b.ops = append(b.ops, &bo)
 }
 
 func (b *KVBatch) Reset() {

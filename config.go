@@ -91,6 +91,14 @@ func (c *Config) SetWalFlushBeforeCommit(b bool) {
 	c.config.wal_flush_before_commit = C.bool(b)
 }
 
+func (c *Config) AutoCommit() bool {
+	return bool(c.config.auto_commit)
+}
+
+func (c *Config) SetAutoCommit(b bool) {
+	c.config.auto_commit = C.bool(b)
+}
+
 func (c *Config) PurgingInterval() uint32 {
 	return uint32(c.config.purging_interval)
 }
@@ -179,6 +187,42 @@ func (c *Config) SetCompactorSleepDuration(s uint64) {
 	c.config.compactor_sleep_duration = C.uint64_t(s)
 }
 
+func (c *Config) MultiKVInstances() bool {
+	return bool(c.config.multi_kv_instances)
+}
+
+func (c *Config) SetMultiKVInstances(multi bool) {
+	c.config.multi_kv_instances = C.bool(multi)
+}
+
+func (c *Config) PrefetchDuration() uint64 {
+	return uint64(c.config.prefetch_duration)
+}
+
+func (c *Config) SetPrefetchDuration(s uint64) {
+	c.config.prefetch_duration = C.uint64_t(s)
+}
+
+func (c *Config) NumWalPartitions() uint16 {
+	return uint16(c.config.num_wal_partitions)
+}
+
+func (c *Config) SetNumWalPartitions(s uint16) {
+	c.config.num_wal_partitions = C.uint16_t(s)
+}
+
+func (c *Config) NumBcachePartitions() uint16 {
+	return uint16(c.config.num_bcache_partitions)
+}
+
+func (c *Config) SetNumBcachePartitions(s uint16) {
+	c.config.num_bcache_partitions = C.uint16_t(s)
+}
+
+// TODO: compaction_cb.
+// TODO: compaction_cb_mask.
+// TODO: compaction_cb_ctx.
+
 func (c *Config) MaxWriterLockProb() uint8 {
 	return uint8(c.config.max_writer_lock_prob)
 }
@@ -187,12 +231,38 @@ func (c *Config) SetMaxWriterLockProb(s uint8) {
 	c.config.max_writer_lock_prob = C.size_t(s)
 }
 
-func (c *Config) MultiKVInstances() bool {
-	return bool(c.config.multi_kv_instances)
+func (c *Config) NumCompactorThreads() int {
+	return int(c.config.num_compactor_threads)
 }
 
-func (c *Config) SetMultiKVInstances(multi bool) {
-	c.config.multi_kv_instances = C.bool(multi)
+func (c *Config) SetNumCompactorThreads(s int) {
+	c.config.num_compactor_threads = C.size_t(s)
+}
+
+func (c *Config) NumBgflusherThreads() int {
+	return int(c.config.num_bgflusher_threads)
+}
+
+func (c *Config) SetNumBgflusherThreads(s int) {
+	c.config.num_bgflusher_threads = C.size_t(s)
+}
+
+// TODO: encryption_key
+
+func (c *Config) NumBlockReusingThreshold() int {
+	return int(c.config.block_reusing_threshold)
+}
+
+func (c *Config) SetNumBlockReusingThreshold(s int) {
+	c.config.block_reusing_threshold = C.size_t(s)
+}
+
+func (c *Config) NumKeepingHeaders() int {
+	return int(c.config.num_keeping_headers)
+}
+
+func (c *Config) SetNumKeepingHeaders(s int) {
+	c.config.num_keeping_headers = C.size_t(s)
 }
 
 // DefaultConfig gets the default ForestDB config

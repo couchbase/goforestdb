@@ -81,7 +81,10 @@ func TestForestDBIterator(t *testing.T) {
 func TestForestDBIteratorSeq(t *testing.T) {
 	defer os.RemoveAll("test")
 
-	dbfile, err := Open("test", nil)
+	config := DefaultConfig()
+	config.SetSeqTreeOpt(SEQTREE_USE)
+
+	dbfile, err := Open("test", config)
 	if err != nil {
 		t.Fatal(err)
 	}

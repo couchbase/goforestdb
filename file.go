@@ -226,3 +226,32 @@ func Destroy(filename string, config *Config) error {
 	}
 	return nil
 }
+
+// CloseFileKVStore closes the KVStore and its associated forestdb file db.
+func CloseFileKVStore(kvs *KVStore) error {
+	f := kvs.File()
+	err0 := kvs.Close()
+	err1 := f.Close()
+	if err0 != nil {
+		return err0
+	}
+	return err1
+}
+
+// OpenFileKVStore opens up a forestdb file db and a single KVStore
+// inside that file/db.
+func OpenFileKVStore(fileName string, config *Config,
+	kvstoreName string, kvstoreConfig *KVStoreConfig) (
+	*KVStore, error) {
+	db, err := Open(fileName, config)
+	if err != nil {
+		return nil, err
+	}
+	kvs, err := db.OpenKVStore(kvstoreName, kvstoreConfig)
+	if err != nil {
+		// close the db file we just opened
+		db.Close()
+		return nil, err
+	}
+	return kvs, nil
+}

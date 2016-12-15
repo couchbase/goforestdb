@@ -20,6 +20,18 @@ package forestdb
 //void gofatal_error_callback() {
 //    FatalErrorCallbackInternal();
 //}
+//extern fdb_compact_decision CompactionCallbackInternal(fdb_file_handle*, int, const char*, fdb_doc*,
+//                                                       uint64_t, uint64_t, void*);
+//fdb_compact_decision compaction_callback(fdb_file_handle *fhandle,
+//                                         fdb_compaction_status status,
+//                                         const char *kv_store_name,
+//                                         fdb_doc *doc,
+//                                         uint64_t last_oldfile_offset,
+//                                         uint64_t last_newfile_offset,
+//                                         void *ctx) {
+//    return CompactionCallbackInternal(fhandle, status, kv_store_name, doc, last_oldfile_offset,
+//                                      last_newfile_offset, ctx);
+//}
 import "C"
 
 import "unsafe"

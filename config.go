@@ -10,11 +10,63 @@ package forestdb
 //  and limitations under the License.
 
 //#include <libforestdb/forestdb.h>
+//fdb_compact_decision compaction_callback(fdb_file_handle *fhandle,
+//                                         fdb_compaction_status status,
+//                                         const char *kv_store_name,
+//                                         fdb_doc *doc,
+//                                         uint64_t last_oldfile_offset,
+//                                         uint64_t last_newfile_offset,
+//                                         void *ctx);
 import "C"
 
 import (
+	"sync"
 	"unsafe"
 )
+
+//export CompactionCallbackInternal
+func CompactionCallbackInternal(handle *C.fdb_file_handle, status C.int, kv_store *C.char, document *C.fdb_doc,
+	last_oldfile_offset C.size_t, last_newfile_offset C.size_t, ctx unsafe.Pointer) C.fdb_compact_decision {
+
+	file := File{handle}
+	doc := Doc{document}
+	offset := (int)((uintptr)(unsafe.Pointer(ctx)))
+	decision := getCompactionCallback(offset).Callback(&file, CompactionStatus(status), C.GoString(kv_store),
+		&doc, uint64(last_oldfile_offset), uint64(last_newfile_offset))
+
+	return C.fdb_compact_decision(decision)
+}
+
+type CompactionCallback interface {
+	Callback(db *File, status CompactionStatus, kv_store_name string, doc *Doc,
+		last_oldfile_offset, last_newfile_offset uint64) CompactDecision
+	Name() string
+}
+
+var compactionCallbacks []CompactionCallback
+var callbackMutex sync.RWMutex
+
+func registerCompactionCallback(cb CompactionCallback) int {
+	// We don't have a good way to remove callbacks so we will
+	// only add them if there is a new struct name added. Otherwise
+	// we just return the index of the currently registed callback.
+	callbackMutex.Lock()
+	defer callbackMutex.Unlock()
+	for idx, rcb := range compactionCallbacks {
+		if rcb.Name() == cb.Name() {
+			return idx
+		}
+	}
+
+	compactionCallbacks = append(compactionCallbacks, cb)
+	return len(compactionCallbacks) - 1
+}
+
+func getCompactionCallback(idx int) CompactionCallback {
+	callbackMutex.RLock()
+	defer callbackMutex.RUnlock()
+	return compactionCallbacks[idx]
+}
 
 type OpenFlags uint32
 
@@ -44,6 +96,24 @@ type CompactOpt uint8
 const (
 	COMPACT_MANUAL CompactOpt = 0
 	COMPACT_AUTO   CompactOpt = 1
+)
+
+type CompactDecision uint32
+
+const (
+	COMPACT_DECISION_KEEP CompactDecision = 0x0
+	COMPACT_DECISION_DROP CompactDecision = 0x1
+)
+
+type CompactionStatus uint32
+
+const (
+	COMPACT_STATUS_BEGIN      CompactionStatus = 0x1
+	COMPACT_STATUS_MOVE_DOC   CompactionStatus = 0x2
+	COMPACT_STATUS_BATCH_MOVE CompactionStatus = 0x4
+	COMPACT_STATUS_FLUSH_WAL  CompactionStatus = 0x8
+	COMPACT_STATUS_END        CompactionStatus = 0x10
+	COMPACT_STATUS_COMPLETE   CompactionStatus = 0x20
 )
 
 // ForestDB config options
@@ -219,9 +289,15 @@ func (c *Config) SetNumBcachePartitions(s uint16) {
 	c.config.num_bcache_partitions = C.uint16_t(s)
 }
 
-// TODO: compaction_cb.
-// TODO: compaction_cb_mask.
-// TODO: compaction_cb_ctx.
+func (c *Config) SetCompactionCallback(callback CompactionCallback) {
+	c.config.compaction_cb = (C.fdb_compaction_callback)(unsafe.Pointer(C.compaction_callback))
+	offset := (uintptr)(registerCompactionCallback(callback))
+	c.config.compaction_cb_ctx = unsafe.Pointer(offset)
+}
+
+func (c *Config) SetCompactionCallbackMask(s CompactionStatus) {
+	c.config.compaction_cb_mask = C.uint32_t(s)
+}
 
 func (c *Config) MaxWriterLockProb() uint8 {
 	return uint8(c.config.max_writer_lock_prob)
